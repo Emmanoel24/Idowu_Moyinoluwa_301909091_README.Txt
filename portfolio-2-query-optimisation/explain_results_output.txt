@@ -1,0 +1,638 @@
+Pager usage is off.
+Timing is on.
+====================================================================
+ PassPoint query optimisation — BEFORE / AFTER EXPLAIN ANALYZE
+====================================================================
+
+##### Q1 — Free slots at LGW-IKO for the next weekday #####
+DROP INDEX
+Time: 3.997 ms
+--- Q1 BEFORE (no index) ---
+                                                                                 QUERY PLAN                                                                                 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=1654.07..1654.22 rows=60 width=36) (actual time=3.004..3.006 rows=3 loops=1)
+   Sort Key: s.start_time
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=279
+   InitPlan 1 (returns $0)
+     ->  Index Scan using office_office_code_key on office  (cost=0.15..8.17 rows=1 width=16) (actual time=0.008..0.009 rows=1 loops=1)
+           Index Cond: (office_code = 'LGW-IKO'::text)
+           Buffers: shared hit=2
+   InitPlan 2 (returns $1)
+     ->  Aggregate  (cost=25.04..25.05 rows=1 width=4) (actual time=0.042..0.042 rows=1 loops=1)
+           ->  Function Scan on generate_series t  (cost=0.02..25.02 rows=5 width=8) (actual time=0.028..0.032 rows=5 loops=1)
+                 Filter: ((EXTRACT(isodow FROM (d)::date) >= '1'::numeric) AND (EXTRACT(isodow FROM (d)::date) <= '5'::numeric))
+                 Rows Removed by Filter: 3
+   ->  Nested Loop  (cost=1404.45..1619.09 rows=60 width=36) (actual time=2.963..2.973 rows=3 loops=1)
+         Buffers: shared hit=274
+         ->  Bitmap Heap Scan on slot s  (cost=1404.29..1613.77 rows=60 width=48) (actual time=2.940..2.948 rows=3 loops=1)
+               Recheck Cond: ((office_id = $0) AND (slot_date = $1))
+               Filter: is_open
+               Rows Removed by Filter: 29
+               Heap Blocks: exact=3
+               Buffers: shared hit=272
+               ->  Bitmap Index Scan on slot_office_id_counter_id_slot_date_start_time_key  (cost=0.00..1404.28 rows=60 width=0) (actual time=2.924..2.924 rows=61 loops=1)
+                     Index Cond: ((office_id = $0) AND (slot_date = $1))
+                     Buffers: shared hit=269
+         ->  Memoize  (cost=0.16..0.98 rows=1 width=20) (actual time=0.007..0.007 rows=1 loops=3)
+               Cache Key: s.service_id
+               Cache Mode: logical
+               Hits: 2  Misses: 1  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+               Buffers: shared hit=2
+               ->  Index Scan using service_type_pkey on service_type st  (cost=0.15..0.97 rows=1 width=20) (actual time=0.014..0.014 rows=1 loops=1)
+                     Index Cond: (service_id = s.service_id)
+                     Buffers: shared hit=2
+ Planning:
+   Buffers: shared hit=311
+ Planning Time: 1.173 ms
+ Execution Time: 3.151 ms
+(36 rows)
+
+Time: 6.164 ms
+CREATE INDEX
+Time: 37.436 ms
+--- Q1 AFTER (with slot_lookup_idx) ---
+                                                                      QUERY PLAN                                                                      
+------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=162.17..162.25 rows=32 width=36) (actual time=0.062..0.063 rows=3 loops=1)
+   Sort Key: s.start_time
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=5 read=2
+   InitPlan 1 (returns $0)
+     ->  Index Scan using office_office_code_key on office  (cost=0.15..8.17 rows=1 width=16) (actual time=0.006..0.007 rows=1 loops=1)
+           Index Cond: (office_code = 'LGW-IKO'::text)
+           Buffers: shared hit=2
+   InitPlan 2 (returns $1)
+     ->  Aggregate  (cost=25.04..25.05 rows=1 width=4) (actual time=0.017..0.017 rows=1 loops=1)
+           ->  Function Scan on generate_series t  (cost=0.02..25.02 rows=5 width=8) (actual time=0.011..0.014 rows=5 loops=1)
+                 Filter: ((EXTRACT(isodow FROM (d)::date) >= '1'::numeric) AND (EXTRACT(isodow FROM (d)::date) <= '5'::numeric))
+                 Rows Removed by Filter: 3
+   ->  Nested Loop  (cost=4.77..128.16 rows=32 width=36) (actual time=0.054..0.057 rows=3 loops=1)
+         Buffers: shared hit=5 read=2
+         ->  Bitmap Heap Scan on slot s  (cost=4.61..120.85 rows=32 width=48) (actual time=0.048..0.049 rows=3 loops=1)
+               Recheck Cond: ((office_id = $0) AND (slot_date = $1) AND is_open)
+               Heap Blocks: exact=1
+               Buffers: shared hit=3 read=2
+               ->  Bitmap Index Scan on slot_lookup_idx  (cost=0.00..4.60 rows=32 width=0) (actual time=0.044..0.045 rows=3 loops=1)
+                     Index Cond: ((office_id = $0) AND (slot_date = $1))
+                     Buffers: shared hit=2 read=2
+         ->  Memoize  (cost=0.16..1.68 rows=1 width=20) (actual time=0.002..0.002 rows=1 loops=3)
+               Cache Key: s.service_id
+               Cache Mode: logical
+               Hits: 2  Misses: 1  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+               Buffers: shared hit=2
+               ->  Index Scan using service_type_pkey on service_type st  (cost=0.15..1.67 rows=1 width=20) (actual time=0.003..0.003 rows=1 loops=1)
+                     Index Cond: (service_id = s.service_id)
+                     Buffers: shared hit=2
+ Planning:
+   Buffers: shared hit=27 read=1
+ Planning Time: 0.313 ms
+ Execution Time: 0.101 ms
+(34 rows)
+
+Time: 0.784 ms
+
+##### Q2 — Appointments per office per month (last 12 months) #####
+DROP INDEX
+Time: 1.660 ms
+psql:queries.sql:66: NOTICE:  index "appointment_slot_idx" does not exist, skipping
+DROP INDEX
+Time: 0.148 ms
+--- Q2 BEFORE (no index) ---
+                                                                    QUERY PLAN                                                                    
+--------------------------------------------------------------------------------------------------------------------------------------------------
+ GroupAggregate  (cost=7717.64..8461.99 rows=29774 width=72) (actual time=80.330..83.978 rows=52 loops=1)
+   Group Key: o.office_code, (to_char(date_trunc('month'::text, a.booked_at), 'YYYY-MM'::text))
+   Buffers: shared hit=2831
+   ->  Sort  (cost=7717.64..7792.07 rows=29774 width=64) (actual time=80.248..81.379 rows=29900 loops=1)
+         Sort Key: o.office_code, (to_char(date_trunc('month'::text, a.booked_at), 'YYYY-MM'::text))
+         Sort Method: quicksort  Memory: 1936kB
+         Buffers: shared hit=2831
+         ->  Hash Join  (cost=2450.30..5505.17 rows=29774 width=64) (actual time=41.148..68.847 rows=29900 loops=1)
+               Hash Cond: (s.office_id = o.office_id)
+               Buffers: shared hit=2828
+               ->  Hash Join  (cost=2430.18..5257.28 rows=29774 width=24) (actual time=41.033..52.824 rows=29900 loops=1)
+                     Hash Cond: (s.slot_id = a.slot_id)
+                     Buffers: shared hit=2827
+                     ->  Seq Scan on slot s  (cost=0.00..2648.68 rows=67968 width=32) (actual time=0.002..5.867 rows=67968 loops=1)
+                           Buffers: shared hit=1969
+                     ->  Hash  (cost=2058.00..2058.00 rows=29774 width=24) (actual time=32.749..32.750 rows=29900 loops=1)
+                           Buckets: 32768  Batches: 1  Memory Usage: 1892kB
+                           Buffers: shared hit=858
+                           ->  Seq Scan on appointment a  (cost=0.00..2058.00 rows=29774 width=24) (actual time=0.007..26.863 rows=29900 loops=1)
+                                 Filter: (booked_at >= (date_trunc('month'::text, now()) - '1 year'::interval))
+                                 Rows Removed by Filter: 30100
+                                 Buffers: shared hit=858
+               ->  Hash  (cost=14.50..14.50 rows=450 width=48) (actual time=0.007..0.008 rows=4 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                     Buffers: shared hit=1
+                     ->  Seq Scan on office o  (cost=0.00..14.50 rows=450 width=48) (actual time=0.004..0.005 rows=4 loops=1)
+                           Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=135
+ Planning Time: 0.474 ms
+ Execution Time: 84.116 ms
+(31 rows)
+
+Time: 85.220 ms
+CREATE INDEX
+Time: 63.737 ms
+CREATE INDEX
+Time: 269.285 ms
+--- Q2 AFTER (with appointment_booked_at_idx + appointment_slot_idx) ---
+                                                                                QUERY PLAN                                                                                
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GroupAggregate  (cost=7672.17..8416.52 rows=29774 width=72) (actual time=69.480..73.017 rows=52 loops=1)
+   Group Key: o.office_code, (to_char(date_trunc('month'::text, a.booked_at), 'YYYY-MM'::text))
+   Buffers: shared hit=2828 read=82
+   ->  Sort  (cost=7672.17..7746.60 rows=29774 width=64) (actual time=69.392..70.457 rows=29900 loops=1)
+         Sort Key: o.office_code, (to_char(date_trunc('month'::text, a.booked_at), 'YYYY-MM'::text))
+         Sort Method: quicksort  Memory: 1936kB
+         Buffers: shared hit=2828 read=82
+         ->  Hash Join  (cost=2404.83..5459.69 rows=29774 width=64) (actual time=30.217..58.207 rows=29900 loops=1)
+               Hash Cond: (s.office_id = o.office_id)
+               Buffers: shared hit=2828 read=82
+               ->  Hash Join  (cost=2384.70..5211.81 rows=29774 width=24) (actual time=30.193..41.056 rows=29900 loops=1)
+                     Hash Cond: (s.slot_id = a.slot_id)
+                     Buffers: shared hit=2827 read=82
+                     ->  Seq Scan on slot s  (cost=0.00..2648.68 rows=67968 width=32) (actual time=0.002..5.695 rows=67968 loops=1)
+                           Buffers: shared hit=1969
+                     ->  Hash  (cost=2012.53..2012.53 rows=29774 width=24) (actual time=21.638..21.639 rows=29900 loops=1)
+                           Buckets: 32768  Batches: 1  Memory Usage: 1892kB
+                           Buffers: shared hit=858 read=82
+                           ->  Bitmap Heap Scan on appointment a  (cost=559.05..2012.53 rows=29774 width=24) (actual time=1.944..11.271 rows=29900 loops=1)
+                                 Recheck Cond: (booked_at >= (date_trunc('month'::text, now()) - '1 year'::interval))
+                                 Heap Blocks: exact=858
+                                 Buffers: shared hit=858 read=82
+                                 ->  Bitmap Index Scan on appointment_booked_at_idx  (cost=0.00..551.60 rows=29774 width=0) (actual time=1.835..1.835 rows=29900 loops=1)
+                                       Index Cond: (booked_at >= (date_trunc('month'::text, now()) - '1 year'::interval))
+                                       Buffers: shared read=82
+               ->  Hash  (cost=14.50..14.50 rows=450 width=48) (actual time=0.009..0.009 rows=4 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                     Buffers: shared hit=1
+                     ->  Seq Scan on office o  (cost=0.00..14.50 rows=450 width=48) (actual time=0.005..0.005 rows=4 loops=1)
+                           Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=56 read=7 dirtied=1
+ Planning Time: 0.446 ms
+ Execution Time: 73.224 ms
+(34 rows)
+
+Time: 74.161 ms
+
+##### Q3 — No-show rate per office per month #####
+psql:queries.sql:99: NOTICE:  index "appointment_no_show_idx" does not exist, skipping
+DROP INDEX
+Time: 0.218 ms
+--- Q3 BEFORE (no index) ---
+                                                                                                                 QUERY PLAN                                                                                                                 
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=8937.56..9012.00 rows=29774 width=112) (actual time=46.596..46.603 rows=52 loops=1)
+   Sort Key: (round(((100.0 * (count(*) FILTER (WHERE (a.status = 'NO_SHOW'::appointment_status)))::numeric) / (NULLIF(count(*), 0))::numeric), 2)) DESC, o.office_code, (to_char(date_trunc('month'::text, a.booked_at), 'YYYY-MM'::text))
+   Sort Method: quicksort  Memory: 28kB
+   Buffers: shared hit=2913
+   ->  HashAggregate  (cost=5831.87..6725.09 rows=29774 width=112) (actual time=46.325..46.553 rows=52 loops=1)
+         Group Key: o.office_code, to_char(date_trunc('month'::text, a.booked_at), 'YYYY-MM'::text)
+         Batches: 1  Memory Usage: 1561kB
+         Buffers: shared hit=2910
+         ->  Hash Join  (cost=2404.83..5459.69 rows=29774 width=68) (actual time=17.640..41.076 rows=29900 loops=1)
+               Hash Cond: (s.office_id = o.office_id)
+               Buffers: shared hit=2910
+               ->  Hash Join  (cost=2384.70..5211.81 rows=29774 width=28) (actual time=17.619..27.463 rows=29900 loops=1)
+                     Hash Cond: (s.slot_id = a.slot_id)
+                     Buffers: shared hit=2909
+                     ->  Seq Scan on slot s  (cost=0.00..2648.68 rows=67968 width=32) (actual time=0.002..5.474 rows=67968 loops=1)
+                           Buffers: shared hit=1969
+                     ->  Hash  (cost=2012.53..2012.53 rows=29774 width=28) (actual time=9.633..9.634 rows=29900 loops=1)
+                           Buckets: 32768  Batches: 1  Memory Usage: 2008kB
+                           Buffers: shared hit=940
+                           ->  Bitmap Heap Scan on appointment a  (cost=559.05..2012.53 rows=29774 width=28) (actual time=1.353..5.728 rows=29900 loops=1)
+                                 Recheck Cond: (booked_at >= (date_trunc('month'::text, now()) - '1 year'::interval))
+                                 Heap Blocks: exact=858
+                                 Buffers: shared hit=940
+                                 ->  Bitmap Index Scan on appointment_booked_at_idx  (cost=0.00..551.60 rows=29774 width=0) (actual time=1.266..1.267 rows=29900 loops=1)
+                                       Index Cond: (booked_at >= (date_trunc('month'::text, now()) - '1 year'::interval))
+                                       Buffers: shared hit=82
+               ->  Hash  (cost=14.50..14.50 rows=450 width=48) (actual time=0.008..0.009 rows=4 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                     Buffers: shared hit=1
+                     ->  Seq Scan on office o  (cost=0.00..14.50 rows=450 width=48) (actual time=0.005..0.006 rows=4 loops=1)
+                           Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=31
+ Planning Time: 0.392 ms
+ Execution Time: 46.760 ms
+(35 rows)
+
+Time: 47.975 ms
+CREATE INDEX
+Time: 12.332 ms
+--- Q3 AFTER (with appointment_no_show_idx) ---
+                                                                                                                 QUERY PLAN                                                                                                                 
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=8937.56..9012.00 rows=29774 width=112) (actual time=51.525..51.533 rows=52 loops=1)
+   Sort Key: (round(((100.0 * (count(*) FILTER (WHERE (a.status = 'NO_SHOW'::appointment_status)))::numeric) / (NULLIF(count(*), 0))::numeric), 2)) DESC, o.office_code, (to_char(date_trunc('month'::text, a.booked_at), 'YYYY-MM'::text))
+   Sort Method: quicksort  Memory: 28kB
+   Buffers: shared hit=2910
+   ->  HashAggregate  (cost=5831.87..6725.09 rows=29774 width=112) (actual time=51.212..51.489 rows=52 loops=1)
+         Group Key: o.office_code, to_char(date_trunc('month'::text, a.booked_at), 'YYYY-MM'::text)
+         Batches: 1  Memory Usage: 1561kB
+         Buffers: shared hit=2910
+         ->  Hash Join  (cost=2404.83..5459.69 rows=29774 width=68) (actual time=17.359..45.051 rows=29900 loops=1)
+               Hash Cond: (s.office_id = o.office_id)
+               Buffers: shared hit=2910
+               ->  Hash Join  (cost=2384.70..5211.81 rows=29774 width=28) (actual time=17.336..28.589 rows=29900 loops=1)
+                     Hash Cond: (s.slot_id = a.slot_id)
+                     Buffers: shared hit=2909
+                     ->  Seq Scan on slot s  (cost=0.00..2648.68 rows=67968 width=32) (actual time=0.002..5.641 rows=67968 loops=1)
+                           Buffers: shared hit=1969
+                     ->  Hash  (cost=2012.53..2012.53 rows=29774 width=28) (actual time=8.992..8.994 rows=29900 loops=1)
+                           Buckets: 32768  Batches: 1  Memory Usage: 2008kB
+                           Buffers: shared hit=940
+                           ->  Bitmap Heap Scan on appointment a  (cost=559.05..2012.53 rows=29774 width=28) (actual time=1.377..5.715 rows=29900 loops=1)
+                                 Recheck Cond: (booked_at >= (date_trunc('month'::text, now()) - '1 year'::interval))
+                                 Heap Blocks: exact=858
+                                 Buffers: shared hit=940
+                                 ->  Bitmap Index Scan on appointment_booked_at_idx  (cost=0.00..551.60 rows=29774 width=0) (actual time=1.289..1.289 rows=29900 loops=1)
+                                       Index Cond: (booked_at >= (date_trunc('month'::text, now()) - '1 year'::interval))
+                                       Buffers: shared hit=82
+               ->  Hash  (cost=14.50..14.50 rows=450 width=48) (actual time=0.009..0.009 rows=4 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                     Buffers: shared hit=1
+                     ->  Seq Scan on office o  (cost=0.00..14.50 rows=450 width=48) (actual time=0.005..0.006 rows=4 loops=1)
+                           Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=38 read=1
+ Planning Time: 0.378 ms
+ Execution Time: 51.704 ms
+(35 rows)
+
+Time: 53.234 ms
+
+##### Q4 — Average days from booking to collection (last 12 months) #####
+psql:queries.sql:137: NOTICE:  index "collection_appointment_idx" does not exist, skipping
+DROP INDEX
+Time: 2.710 ms
+--- Q4 BEFORE (no index) ---
+                                                                         QUERY PLAN                                                                         
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=6659.73..6660.85 rows=450 width=64) (actual time=51.214..51.220 rows=4 loops=1)
+   Sort Key: (round((avg(EXTRACT(epoch FROM (c.collected_at - a.booked_at))) / '86400'::numeric), 2)) DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=3622
+   ->  HashAggregate  (cost=6632.02..6639.90 rows=450 width=64) (actual time=51.197..51.207 rows=4 loops=1)
+         Group Key: o.office_code
+         Batches: 1  Memory Usage: 37kB
+         Buffers: shared hit=3622
+         ->  Hash Join  (cost=3434.72..6502.33 rows=12969 width=48) (actual time=32.530..44.578 rows=21401 loops=1)
+               Hash Cond: (s.office_id = o.office_id)
+               Buffers: shared hit=3622
+               ->  Hash Join  (cost=3414.59..6447.84 rows=12969 width=32) (actual time=32.515..41.579 rows=21401 loops=1)
+                     Hash Cond: (s.slot_id = a.slot_id)
+                     Buffers: shared hit=3621
+                     ->  Seq Scan on slot s  (cost=0.00..2648.68 rows=67968 width=32) (actual time=0.003..5.507 rows=67968 loops=1)
+                           Buffers: shared hit=1969
+                     ->  Hash  (cost=3252.48..3252.48 rows=12969 width=32) (actual time=25.801..25.804 rows=21401 loops=1)
+                           Buckets: 32768 (originally 16384)  Batches: 1 (originally 1)  Memory Usage: 1594kB
+                           Buffers: shared hit=1652
+                           ->  Hash Join  (cost=1636.97..3252.48 rows=12969 width=32) (actual time=10.802..22.808 rows=21401 loops=1)
+                                 Hash Cond: (a.appointment_id = c.appointment_id)
+                                 Buffers: shared hit=1652
+                                 ->  Seq Scan on appointment a  (cost=0.00..1458.00 rows=60000 width=40) (actual time=0.005..3.266 rows=60000 loops=1)
+                                       Buffers: shared hit=858
+                                 ->  Hash  (cost=1474.86..1474.86 rows=12969 width=24) (actual time=10.783..10.784 rows=21401 loops=1)
+                                       Buckets: 32768 (originally 16384)  Batches: 1 (originally 1)  Memory Usage: 1427kB
+                                       Buffers: shared hit=794
+                                       ->  Seq Scan on collection c  (cost=0.00..1474.86 rows=12969 width=24) (actual time=0.008..8.030 rows=21401 loops=1)
+                                             Filter: (collected_at >= (now() - '1 year'::interval))
+                                             Rows Removed by Filter: 19779
+                                             Buffers: shared hit=794
+               ->  Hash  (cost=14.50..14.50 rows=450 width=48) (actual time=0.009..0.010 rows=4 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                     Buffers: shared hit=1
+                     ->  Seq Scan on office o  (cost=0.00..14.50 rows=450 width=48) (actual time=0.005..0.006 rows=4 loops=1)
+                           Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=79 read=2
+ Planning Time: 0.737 ms
+ Execution Time: 51.282 ms
+(40 rows)
+
+Time: 52.885 ms
+CREATE INDEX
+Time: 76.949 ms
+--- Q4 AFTER (with collection_appointment_idx) ---
+                                                                                      QUERY PLAN                                                                                       
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=6637.90..6639.02 rows=450 width=64) (actual time=44.729..44.734 rows=4 loops=1)
+   Sort Key: (round((avg(EXTRACT(epoch FROM (c.collected_at - a.booked_at))) / '86400'::numeric), 2)) DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=3622 read=107
+   ->  HashAggregate  (cost=6610.19..6618.07 rows=450 width=64) (actual time=44.715..44.724 rows=4 loops=1)
+         Group Key: o.office_code
+         Batches: 1  Memory Usage: 37kB
+         Buffers: shared hit=3622 read=107
+         ->  Hash Join  (cost=3395.71..6472.92 rows=13727 width=48) (actual time=28.213..38.970 rows=21401 loops=1)
+               Hash Cond: (s.office_id = o.office_id)
+               Buffers: shared hit=3622 read=107
+               ->  Hash Join  (cost=3375.59..6416.42 rows=13727 width=32) (actual time=28.201..36.176 rows=21401 loops=1)
+                     Hash Cond: (s.slot_id = a.slot_id)
+                     Buffers: shared hit=3621 read=107
+                     ->  Seq Scan on slot s  (cost=0.00..2648.68 rows=67968 width=32) (actual time=0.002..5.268 rows=67968 loops=1)
+                           Buffers: shared hit=1969
+                     ->  Hash  (cost=3204.00..3204.00 rows=13727 width=32) (actual time=21.657..21.660 rows=21401 loops=1)
+                           Buckets: 32768 (originally 16384)  Batches: 1 (originally 1)  Memory Usage: 1594kB
+                           Buffers: shared hit=1652 read=107
+                           ->  Hash Join  (cost=1588.49..3204.00 rows=13727 width=32) (actual time=7.238..18.651 rows=21401 loops=1)
+                                 Hash Cond: (a.appointment_id = c.appointment_id)
+                                 Buffers: shared hit=1652 read=107
+                                 ->  Seq Scan on appointment a  (cost=0.00..1458.00 rows=60000 width=40) (actual time=0.003..3.252 rows=60000 loops=1)
+                                       Buffers: shared hit=858
+                                 ->  Hash  (cost=1416.90..1416.90 rows=13727 width=24) (actual time=7.218..7.219 rows=21401 loops=1)
+                                       Buckets: 32768 (originally 16384)  Batches: 1 (originally 1)  Memory Usage: 1427kB
+                                       Buffers: shared hit=794 read=107
+                                       ->  Bitmap Heap Scan on collection c  (cost=382.68..1416.90 rows=13727 width=24) (actual time=1.331..4.716 rows=21401 loops=1)
+                                             Recheck Cond: (collected_at >= (now() - '1 year'::interval))
+                                             Heap Blocks: exact=794
+                                             Buffers: shared hit=794 read=107
+                                             ->  Bitmap Index Scan on collection_appointment_idx  (cost=0.00..379.25 rows=13727 width=0) (actual time=1.246..1.247 rows=21401 loops=1)
+                                                   Index Cond: (collected_at >= (now() - '1 year'::interval))
+                                                   Buffers: shared read=107
+               ->  Hash  (cost=14.50..14.50 rows=450 width=48) (actual time=0.008..0.008 rows=4 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                     Buffers: shared hit=1
+                     ->  Seq Scan on office o  (cost=0.00..14.50 rows=450 width=48) (actual time=0.004..0.005 rows=4 loops=1)
+                           Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=38 read=1
+ Planning Time: 0.456 ms
+ Execution Time: 44.796 ms
+(43 rows)
+
+Time: 45.712 ms
+
+##### Q5 — Busiest days and times #####
+psql:queries.sql:173: NOTICE:  index "slot_date_time_idx" does not exist, skipping
+DROP INDEX
+Time: 0.165 ms
+--- Q5 BEFORE (no index) ---
+                                                                   QUERY PLAN                                                                    
+-------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=5767.93..5767.95 rows=10 width=84) (actual time=48.684..48.689 rows=10 loops=1)
+   Buffers: shared hit=2830
+   ->  Sort  (cost=5767.93..5784.92 rows=6797 width=84) (actual time=48.683..48.686 rows=10 loops=1)
+         Sort Key: (count(*)) DESC
+         Sort Method: top-N heapsort  Memory: 25kB
+         Buffers: shared hit=2830
+         ->  HashAggregate  (cost=5485.11..5621.05 rows=6797 width=84) (actual time=40.393..47.074 rows=8496 loops=1)
+               Group Key: s.slot_date, s.start_time
+               Batches: 1  Memory Usage: 1169kB
+               Buffers: shared hit=2827
+               ->  Hash Join  (cost=2208.00..5035.11 rows=60000 width=12) (actual time=14.716..31.861 rows=60000 loops=1)
+                     Hash Cond: (s.slot_id = a.slot_id)
+                     Buffers: shared hit=2827
+                     ->  Seq Scan on slot s  (cost=0.00..2648.68 rows=67968 width=28) (actual time=0.004..5.356 rows=67968 loops=1)
+                           Buffers: shared hit=1969
+                     ->  Hash  (cost=1458.00..1458.00 rows=60000 width=16) (actual time=12.419..12.420 rows=60000 loops=1)
+                           Buckets: 65536  Batches: 1  Memory Usage: 3325kB
+                           Buffers: shared hit=858
+                           ->  Seq Scan on appointment a  (cost=0.00..1458.00 rows=60000 width=16) (actual time=0.003..4.835 rows=60000 loops=1)
+                                 Buffers: shared hit=858
+ Planning:
+   Buffers: shared hit=35
+ Planning Time: 0.258 ms
+ Execution Time: 48.756 ms
+(24 rows)
+
+Time: 50.208 ms
+CREATE INDEX
+Time: 56.818 ms
+--- Q5 AFTER (with slot_date_time_idx) ---
+                                                                   QUERY PLAN                                                                    
+-------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=5767.93..5767.95 rows=10 width=84) (actual time=57.341..57.345 rows=10 loops=1)
+   Buffers: shared hit=2827
+   ->  Sort  (cost=5767.93..5784.92 rows=6797 width=84) (actual time=57.340..57.343 rows=10 loops=1)
+         Sort Key: (count(*)) DESC
+         Sort Method: top-N heapsort  Memory: 25kB
+         Buffers: shared hit=2827
+         ->  HashAggregate  (cost=5485.11..5621.05 rows=6797 width=84) (actual time=48.961..55.790 rows=8496 loops=1)
+               Group Key: s.slot_date, s.start_time
+               Batches: 1  Memory Usage: 1169kB
+               Buffers: shared hit=2827
+               ->  Hash Join  (cost=2208.00..5035.11 rows=60000 width=12) (actual time=21.063..40.293 rows=60000 loops=1)
+                     Hash Cond: (s.slot_id = a.slot_id)
+                     Buffers: shared hit=2827
+                     ->  Seq Scan on slot s  (cost=0.00..2648.68 rows=67968 width=28) (actual time=0.006..5.796 rows=67968 loops=1)
+                           Buffers: shared hit=1969
+                     ->  Hash  (cost=1458.00..1458.00 rows=60000 width=16) (actual time=17.750..17.751 rows=60000 loops=1)
+                           Buckets: 65536  Batches: 1  Memory Usage: 3325kB
+                           Buffers: shared hit=858
+                           ->  Seq Scan on appointment a  (cost=0.00..1458.00 rows=60000 width=16) (actual time=0.005..6.900 rows=60000 loops=1)
+                                 Buffers: shared hit=858
+ Planning:
+   Buffers: shared hit=41 read=1
+ Planning Time: 0.543 ms
+ Execution Time: 57.421 ms
+(24 rows)
+
+Time: 58.405 ms
+
+##### Q6 — Revenue per service type (last 12 months) #####
+psql:queries.sql:203: NOTICE:  index "payment_confirmed_idx" does not exist, skipping
+DROP INDEX
+Time: 0.268 ms
+--- Q6 BEFORE (no index) ---
+                                                                            QUERY PLAN                                                                             
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=1279.00..1279.22 rows=88 width=44) (actual time=78.543..78.546 rows=3 loops=1)
+   Sort Key: (sum(p.amount_ngn)) DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=104703
+   ->  GroupAggregate  (cost=1274.18..1276.16 rows=88 width=44) (actual time=75.520..78.537 rows=3 loops=1)
+         Group Key: st.code
+         Buffers: shared hit=104703
+         ->  Sort  (cost=1274.18..1274.40 rows=88 width=20) (actual time=73.871..74.895 rows=25936 loops=1)
+               Sort Key: st.code
+               Sort Method: quicksort  Memory: 1782kB
+               Buffers: shared hit=104703
+               ->  Nested Loop  (cost=6.87..1271.34 rows=88 width=20) (actual time=2.129..69.778 rows=25936 loops=1)
+                     Buffers: shared hit=104703
+                     ->  Nested Loop  (cost=6.71..1268.48 rows=88 width=32) (actual time=2.119..61.002 rows=25936 loops=1)
+                           Buffers: shared hit=104697
+                           ->  Bitmap Heap Scan on payment p  (cost=6.29..586.42 rows=88 width=32) (actual time=2.104..16.974 rows=25936 loops=1)
+                                 Recheck Cond: (payment_status = 'CONFIRMED'::payment_status)
+                                 Filter: (confirmed_at >= (now() - '1 year'::interval))
+                                 Rows Removed by Filter: 27590
+                                 Heap Blocks: exact=910
+                                 Buffers: shared hit=953
+                                 ->  Bitmap Index Scan on payment_status_idx  (cost=0.00..6.27 rows=264 width=0) (actual time=1.984..1.984 rows=53526 loops=1)
+                                       Index Cond: (payment_status = 'CONFIRMED'::payment_status)
+                                       Buffers: shared hit=43
+                           ->  Index Scan using appointment_pkey on appointment a  (cost=0.41..7.75 rows=1 width=32) (actual time=0.001..0.001 rows=1 loops=25936)
+                                 Index Cond: (appointment_id = p.appointment_id)
+                                 Buffers: shared hit=103744
+                     ->  Memoize  (cost=0.16..0.18 rows=1 width=20) (actual time=0.000..0.000 rows=1 loops=25936)
+                           Cache Key: a.service_id
+                           Cache Mode: logical
+                           Hits: 25933  Misses: 3  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                           Buffers: shared hit=6
+                           ->  Index Scan using service_type_pkey on service_type st  (cost=0.15..0.17 rows=1 width=20) (actual time=0.002..0.002 rows=1 loops=3)
+                                 Index Cond: (service_id = a.service_id)
+                                 Buffers: shared hit=6
+ Planning:
+   Buffers: shared hit=84
+ Planning Time: 0.532 ms
+ Execution Time: 78.596 ms
+(39 rows)
+
+Time: 80.145 ms
+CREATE INDEX
+Time: 26.861 ms
+--- Q6 AFTER (with payment_confirmed_idx) ---
+                                                                            QUERY PLAN                                                                             
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=1411.00..1411.25 rows=100 width=44) (actual time=68.678..68.681 rows=3 loops=1)
+   Sort Key: (sum(p.amount_ngn)) DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=104660 read=46
+   ->  GroupAggregate  (cost=1405.42..1407.67 rows=100 width=44) (actual time=65.637..68.674 rows=3 loops=1)
+         Group Key: st.code
+         Buffers: shared hit=104660 read=46
+         ->  Sort  (cost=1405.42..1405.67 rows=100 width=20) (actual time=63.984..65.004 rows=25936 loops=1)
+               Sort Key: st.code
+               Sort Method: quicksort  Memory: 1782kB
+               Buffers: shared hit=104660 read=46
+               ->  Nested Loop  (cost=6.39..1402.10 rows=100 width=20) (actual time=1.137..60.067 rows=25936 loops=1)
+                     Buffers: shared hit=104660 read=46
+                     ->  Nested Loop  (cost=6.23..1398.94 rows=100 width=32) (actual time=1.129..52.147 rows=25936 loops=1)
+                           Buffers: shared hit=104654 read=46
+                           ->  Bitmap Heap Scan on payment p  (cost=5.82..631.69 rows=100 width=32) (actual time=1.119..13.602 rows=25936 loops=1)
+                                 Recheck Cond: (payment_status = 'CONFIRMED'::payment_status)
+                                 Filter: (confirmed_at >= (now() - '1 year'::interval))
+                                 Rows Removed by Filter: 27590
+                                 Heap Blocks: exact=910
+                                 Buffers: shared hit=910 read=46
+                                 ->  Bitmap Index Scan on payment_confirmed_idx  (cost=0.00..5.79 rows=300 width=0) (actual time=1.022..1.022 rows=53526 loops=1)
+                                       Buffers: shared read=46
+                           ->  Index Scan using appointment_pkey on appointment a  (cost=0.41..7.67 rows=1 width=32) (actual time=0.001..0.001 rows=1 loops=25936)
+                                 Index Cond: (appointment_id = p.appointment_id)
+                                 Buffers: shared hit=103744
+                     ->  Memoize  (cost=0.16..0.18 rows=1 width=20) (actual time=0.000..0.000 rows=1 loops=25936)
+                           Cache Key: a.service_id
+                           Cache Mode: logical
+                           Hits: 25933  Misses: 3  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                           Buffers: shared hit=6
+                           ->  Index Scan using service_type_pkey on service_type st  (cost=0.15..0.17 rows=1 width=20) (actual time=0.001..0.002 rows=1 loops=3)
+                                 Index Cond: (service_id = a.service_id)
+                                 Buffers: shared hit=6
+ Planning:
+   Buffers: shared hit=17 read=1
+ Planning Time: 0.312 ms
+ Execution Time: 68.719 ms
+(38 rows)
+
+Time: 69.467 ms
+
+##### Q7 — Revenue per office per month (last 12 months) #####
+psql:queries.sql:237: NOTICE:  index "payment_amount_idx" does not exist, skipping
+DROP INDEX
+Time: 0.125 ms
+--- Q7 BEFORE (no index) ---
+                                                                            QUERY PLAN                                                                             
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GroupAggregate  (cost=1466.43..1469.18 rows=100 width=96) (actual time=147.913..153.207 rows=52 loops=1)
+   Group Key: o.office_code, (to_char(date_trunc('month'::text, p.confirmed_at), 'YYYY-MM'::text))
+   Buffers: shared hit=260323
+   ->  Sort  (cost=1466.43..1466.68 rows=100 width=80) (actual time=147.820..148.984 rows=25936 loops=1)
+         Sort Key: o.office_code, (to_char(date_trunc('month'::text, p.confirmed_at), 'YYYY-MM'::text))
+         Sort Method: quicksort  Memory: 2185kB
+         Buffers: shared hit=260323
+         ->  Nested Loop  (cost=6.81..1463.11 rows=100 width=80) (actual time=1.056..136.795 rows=25936 loops=1)
+               Buffers: shared hit=260323
+               ->  Nested Loop  (cost=6.65..1459.29 rows=100 width=40) (actual time=1.043..117.439 rows=25936 loops=1)
+                     Buffers: shared hit=260315
+                     ->  Nested Loop  (cost=6.23..1398.94 rows=100 width=40) (actual time=1.035..56.290 rows=25936 loops=1)
+                           Buffers: shared hit=104700
+                           ->  Bitmap Heap Scan on payment p  (cost=5.82..631.69 rows=100 width=40) (actual time=1.030..13.282 rows=25936 loops=1)
+                                 Recheck Cond: (payment_status = 'CONFIRMED'::payment_status)
+                                 Filter: (confirmed_at >= (now() - '1 year'::interval))
+                                 Rows Removed by Filter: 27590
+                                 Heap Blocks: exact=910
+                                 Buffers: shared hit=956
+                                 ->  Bitmap Index Scan on payment_confirmed_idx  (cost=0.00..5.79 rows=300 width=0) (actual time=0.939..0.940 rows=53526 loops=1)
+                                       Buffers: shared hit=46
+                           ->  Index Scan using appointment_pkey on appointment a  (cost=0.41..7.67 rows=1 width=32) (actual time=0.001..0.001 rows=1 loops=25936)
+                                 Index Cond: (appointment_id = p.appointment_id)
+                                 Buffers: shared hit=103744
+                     ->  Index Scan using slot_pkey on slot s  (cost=0.42..0.60 rows=1 width=32) (actual time=0.002..0.002 rows=1 loops=25936)
+                           Index Cond: (slot_id = a.slot_id)
+                           Buffers: shared hit=129680
+               ->  Memoize  (cost=0.16..0.18 rows=1 width=48) (actual time=0.000..0.000 rows=1 loops=25936)
+                     Cache Key: s.office_id
+                     Cache Mode: logical
+                     Hits: 25932  Misses: 4  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                     Buffers: shared hit=8
+                     ->  Index Scan using office_pkey on office o  (cost=0.15..0.17 rows=1 width=48) (actual time=0.002..0.002 rows=1 loops=4)
+                           Index Cond: (office_id = s.office_id)
+                           Buffers: shared hit=8
+ Planning:
+   Buffers: shared hit=18
+ Planning Time: 0.395 ms
+ Execution Time: 153.253 ms
+(39 rows)
+
+Time: 154.084 ms
+CREATE INDEX
+Time: 80.346 ms
+--- Q7 AFTER (with payment_amount_idx + payment_confirmed_idx) ---
+                                                                            QUERY PLAN                                                                             
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GroupAggregate  (cost=1466.43..1469.18 rows=100 width=96) (actual time=150.602..155.944 rows=52 loops=1)
+   Group Key: o.office_code, (to_char(date_trunc('month'::text, p.confirmed_at), 'YYYY-MM'::text))
+   Buffers: shared hit=220100
+   ->  Sort  (cost=1466.43..1466.68 rows=100 width=80) (actual time=150.510..151.680 rows=25936 loops=1)
+         Sort Key: o.office_code, (to_char(date_trunc('month'::text, p.confirmed_at), 'YYYY-MM'::text))
+         Sort Method: quicksort  Memory: 2185kB
+         Buffers: shared hit=220100
+         ->  Nested Loop  (cost=6.81..1463.11 rows=100 width=80) (actual time=1.053..139.158 rows=25936 loops=1)
+               Buffers: shared hit=220100
+               ->  Nested Loop  (cost=6.65..1459.29 rows=100 width=40) (actual time=1.042..118.794 rows=25936 loops=1)
+                     Buffers: shared hit=220092
+                     ->  Nested Loop  (cost=6.23..1398.94 rows=100 width=40) (actual time=1.035..61.257 rows=25936 loops=1)
+                           Buffers: shared hit=104700
+                           ->  Bitmap Heap Scan on payment p  (cost=5.82..631.69 rows=100 width=40) (actual time=1.027..14.104 rows=25936 loops=1)
+                                 Recheck Cond: (payment_status = 'CONFIRMED'::payment_status)
+                                 Filter: (confirmed_at >= (now() - '1 year'::interval))
+                                 Rows Removed by Filter: 27590
+                                 Heap Blocks: exact=910
+                                 Buffers: shared hit=956
+                                 ->  Bitmap Index Scan on payment_confirmed_idx  (cost=0.00..5.79 rows=300 width=0) (actual time=0.933..0.933 rows=53526 loops=1)
+                                       Buffers: shared hit=46
+                           ->  Index Scan using appointment_pkey on appointment a  (cost=0.41..7.67 rows=1 width=32) (actual time=0.002..0.002 rows=1 loops=25936)
+                                 Index Cond: (appointment_id = p.appointment_id)
+                                 Buffers: shared hit=103744
+                     ->  Index Scan using slot_pkey on slot s  (cost=0.42..0.60 rows=1 width=32) (actual time=0.002..0.002 rows=1 loops=25936)
+                           Index Cond: (slot_id = a.slot_id)
+                           Buffers: shared hit=109568
+               ->  Memoize  (cost=0.16..0.18 rows=1 width=48) (actual time=0.000..0.000 rows=1 loops=25936)
+                     Cache Key: s.office_id
+                     Cache Mode: logical
+                     Hits: 25932  Misses: 4  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                     Buffers: shared hit=8
+                     ->  Index Scan using office_pkey on office o  (cost=0.15..0.17 rows=1 width=48) (actual time=0.001..0.001 rows=1 loops=4)
+                           Index Cond: (office_id = s.office_id)
+                           Buffers: shared hit=8
+ Planning:
+   Buffers: shared hit=35 read=1
+ Planning Time: 0.481 ms
+ Execution Time: 155.993 ms
+(39 rows)
+
+Time: 156.911 ms
+
+====================================================================
+ End of queries.sql. Paste every BEFORE / AFTER block into the
+ matching [paste real EXPLAIN ANALYZE here] placeholder in
+ explain_results.md.
+====================================================================
