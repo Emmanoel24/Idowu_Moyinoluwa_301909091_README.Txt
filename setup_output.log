@@ -1,0 +1,301 @@
+==> [1/8] Removing problematic yarn.list (if present) and refreshing apt
+Get:1 http://archive.ubuntu.com/ubuntu noble InRelease [256 kB]
+Get:2 https://packages.microsoft.com/repos/microsoft-ubuntu-noble-prod noble InRelease [3600 B]
+Get:3 http://security.ubuntu.com/ubuntu noble-security InRelease [126 kB]
+Get:4 http://archive.ubuntu.com/ubuntu noble-updates InRelease [126 kB]
+Get:5 http://archive.ubuntu.com/ubuntu noble-backports InRelease [126 kB]
+Get:6 https://packages.microsoft.com/repos/microsoft-ubuntu-noble-prod noble/main amd64 Packages [743 kB]
+Get:7 https://packages.microsoft.com/repos/microsoft-ubuntu-noble-prod noble/main all Packages [640 B]
+Get:8 http://archive.ubuntu.com/ubuntu noble/universe amd64 Packages [19.3 MB]
+Get:9 http://archive.ubuntu.com/ubuntu noble/restricted amd64 Packages [117 kB]
+Get:10 http://archive.ubuntu.com/ubuntu noble/main amd64 Packages [1808 kB]
+Get:11 http://archive.ubuntu.com/ubuntu noble/multiverse amd64 Packages [331 kB]
+Get:12 http://archive.ubuntu.com/ubuntu noble-updates/multiverse amd64 Packages [61.7 kB]
+Get:13 http://archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages [2177 kB]
+Get:14 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages [1762 kB]
+Get:15 http://archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Packages [2274 kB]
+Get:16 http://archive.ubuntu.com/ubuntu noble-backports/main amd64 Packages [49.0 kB]
+Get:17 http://archive.ubuntu.com/ubuntu noble-backports/universe amd64 Packages [36.0 kB]
+Get:18 http://archive.ubuntu.com/ubuntu noble-backports/multiverse amd64 Packages [669 B]
+Get:19 http://security.ubuntu.com/ubuntu noble-security/main amd64 Packages [1425 kB]
+Get:20 http://security.ubuntu.com/ubuntu noble-security/multiverse amd64 Packages [55.6 kB]
+Get:21 http://security.ubuntu.com/ubuntu noble-security/restricted amd64 Packages [2132 kB]
+Get:22 http://security.ubuntu.com/ubuntu noble-security/universe amd64 Packages [1557 kB]
+Fetched 34.5 MB in 2s (19.6 MB/s)
+Reading package lists...
+==> [2/8] Installing PostgreSQL 16 and MongoDB 8 packages
+Reading package lists...
+Building dependency tree...
+Reading state information...
+curl is already the newest version (8.5.0-2ubuntu10.16).
+gnupg is already the newest version (2.4.4-2ubuntu17.6).
+gnupg set to manually installed.
+lsb-release is already the newest version (12.0-2).
+lsb-release set to manually installed.
+python3 is already the newest version (3.12.3-0ubuntu2.1).
+python3 set to manually installed.
+python3-pip is already the newest version (24.0+dfsg-1ubuntu1.3).
+libpq-dev is already the newest version (16.15-0ubuntu0.24.04.1).
+The following additional packages will be installed:
+  libcommon-sense-perl libjson-perl libjson-xs-perl libllvm17t64
+  libsensors-config libsensors5 libtypes-serialiser-perl logrotate
+  postgresql-client-common postgresql-common ssl-cert sysstat
+Suggested packages:
+  lm-sensors bsd-mailx | mailx postgresql-doc-16 isag
+The following NEW packages will be installed:
+  libcommon-sense-perl libjson-perl libjson-xs-perl libllvm17t64
+  libsensors-config libsensors5 libtypes-serialiser-perl logrotate
+  postgresql-16 postgresql-client-16 postgresql-client-common
+  postgresql-common ssl-cert sysstat
+The following packages will be upgraded:
+  ca-certificates
+1 upgraded, 14 newly installed, 0 to remove and 18 not upgraded.
+Need to get 44.2 MB of archives.
+After this operation, 177 MB of additional disk space will be used.
+Get:1 http://archive.ubuntu.com/ubuntu noble/main amd64 libjson-perl all 4.10000-1 [81.9 kB]
+Get:2 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 postgresql-client-common all 257build1.1 [36.4 kB]
+Get:3 http://archive.ubuntu.com/ubuntu noble/main amd64 ssl-cert all 1.1.2ubuntu1 [17.8 kB]
+Get:4 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 postgresql-common all 257build1.1 [161 kB]
+Get:5 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 ca-certificates all 20260816ubuntu0.24.04.2 [140 kB]
+Get:6 http://archive.ubuntu.com/ubuntu noble/main amd64 logrotate amd64 3.21.0-2build1 [52.2 kB]
+Get:7 http://archive.ubuntu.com/ubuntu noble/main amd64 libsensors-config all 1:3.6.0-9build1 [5546 B]
+Get:8 http://archive.ubuntu.com/ubuntu noble/main amd64 libsensors5 amd64 1:3.6.0-9build1 [26.6 kB]
+Get:9 http://archive.ubuntu.com/ubuntu noble/main amd64 sysstat amd64 12.6.1-2 [489 kB]
+Get:10 http://archive.ubuntu.com/ubuntu noble/main amd64 libcommon-sense-perl amd64 3.75-3build3 [20.4 kB]
+Get:11 http://archive.ubuntu.com/ubuntu noble/main amd64 libtypes-serialiser-perl all 1.01-1 [11.6 kB]
+Get:12 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 libjson-xs-perl amd64 4.040-0ubuntu0.24.04.1 [83.7 kB]
+Get:13 http://archive.ubuntu.com/ubuntu noble/main amd64 libllvm17t64 amd64 1:17.0.6-9ubuntu1 [26.2 MB]
+Get:14 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 postgresql-client-16 amd64 16.15-0ubuntu0.24.04.1 [1301 kB]
+Get:15 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 postgresql-16 amd64 16.15-0ubuntu0.24.04.1 [15.6 MB]
+Preconfiguring packages ...
+Fetched 44.2 MB in 2s (27.0 MB/s)
+Selecting previously unselected package libjson-perl.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 46452 files and directories currently installed.)
+Preparing to unpack .../00-libjson-perl_4.10000-1_all.deb ...
+Unpacking libjson-perl (4.10000-1) ...
+Selecting previously unselected package postgresql-client-common.
+Preparing to unpack .../01-postgresql-client-common_257build1.1_all.deb ...
+Unpacking postgresql-client-common (257build1.1) ...
+Selecting previously unselected package ssl-cert.
+Preparing to unpack .../02-ssl-cert_1.1.2ubuntu1_all.deb ...
+Unpacking ssl-cert (1.1.2ubuntu1) ...
+Selecting previously unselected package postgresql-common.
+Preparing to unpack .../03-postgresql-common_257build1.1_all.deb ...
+Adding 'diversion of /usr/bin/pg_config to /usr/bin/pg_config.libpq-dev by postgresql-common'
+Unpacking postgresql-common (257build1.1) ...
+Preparing to unpack .../04-ca-certificates_20260816ubuntu0.24.04.2_all.deb ...
+Unpacking ca-certificates (20260816ubuntu0.24.04.2) over (20260816ubuntu0.24.04.1) ...
+Selecting previously unselected package logrotate.
+Preparing to unpack .../05-logrotate_3.21.0-2build1_amd64.deb ...
+Unpacking logrotate (3.21.0-2build1) ...
+Selecting previously unselected package libsensors-config.
+Preparing to unpack .../06-libsensors-config_1%3a3.6.0-9build1_all.deb ...
+Unpacking libsensors-config (1:3.6.0-9build1) ...
+Selecting previously unselected package libsensors5:amd64.
+Preparing to unpack .../07-libsensors5_1%3a3.6.0-9build1_amd64.deb ...
+Unpacking libsensors5:amd64 (1:3.6.0-9build1) ...
+Selecting previously unselected package sysstat.
+Preparing to unpack .../08-sysstat_12.6.1-2_amd64.deb ...
+Unpacking sysstat (12.6.1-2) ...
+Selecting previously unselected package libcommon-sense-perl:amd64.
+Preparing to unpack .../09-libcommon-sense-perl_3.75-3build3_amd64.deb ...
+Unpacking libcommon-sense-perl:amd64 (3.75-3build3) ...
+Selecting previously unselected package libtypes-serialiser-perl.
+Preparing to unpack .../10-libtypes-serialiser-perl_1.01-1_all.deb ...
+Unpacking libtypes-serialiser-perl (1.01-1) ...
+Selecting previously unselected package libjson-xs-perl.
+Preparing to unpack .../11-libjson-xs-perl_4.040-0ubuntu0.24.04.1_amd64.deb ...
+Unpacking libjson-xs-perl (4.040-0ubuntu0.24.04.1) ...
+Selecting previously unselected package libllvm17t64:amd64.
+Preparing to unpack .../12-libllvm17t64_1%3a17.0.6-9ubuntu1_amd64.deb ...
+Unpacking libllvm17t64:amd64 (1:17.0.6-9ubuntu1) ...
+Selecting previously unselected package postgresql-client-16.
+Preparing to unpack .../13-postgresql-client-16_16.15-0ubuntu0.24.04.1_amd64.deb ...
+Unpacking postgresql-client-16 (16.15-0ubuntu0.24.04.1) ...
+Selecting previously unselected package postgresql-16.
+Preparing to unpack .../14-postgresql-16_16.15-0ubuntu0.24.04.1_amd64.deb ...
+Unpacking postgresql-16 (16.15-0ubuntu0.24.04.1) ...
+Setting up logrotate (3.21.0-2build1) ...
+Created symlink /etc/systemd/system/timers.target.wants/logrotate.timer → /usr/lib/systemd/system/logrotate.timer.
+Setting up postgresql-client-common (257build1.1) ...
+Setting up postgresql-client-16 (16.15-0ubuntu0.24.04.1) ...
+update-alternatives: using /usr/share/postgresql/16/man/man1/psql.1.gz to provide /usr/share/man/man1/psql.1.gz (psql.1.gz) in auto mode
+Setting up libsensors-config (1:3.6.0-9build1) ...
+Setting up libcommon-sense-perl:amd64 (3.75-3build3) ...
+Setting up ca-certificates (20260816ubuntu0.24.04.2) ...
+Updating certificates in /etc/ssl/certs...
+0 added, 0 removed; done.
+Running hooks in /etc/ca-certificates/update.d...
+done.
+Setting up libllvm17t64:amd64 (1:17.0.6-9ubuntu1) ...
+Setting up ssl-cert (1.1.2ubuntu1) ...
+Created symlink /etc/systemd/system/multi-user.target.wants/ssl-cert.service → /usr/lib/systemd/system/ssl-cert.service.
+Setting up libsensors5:amd64 (1:3.6.0-9build1) ...
+Setting up libtypes-serialiser-perl (1.01-1) ...
+Setting up libjson-perl (4.10000-1) ...
+Setting up sysstat (12.6.1-2) ...
+
+Creating config file /etc/default/sysstat with new version
+update-alternatives: using /usr/bin/sar.sysstat to provide /usr/bin/sar (sar) in auto mode
+Created symlink /etc/systemd/system/sysstat.service.wants/sysstat-collect.timer → /usr/lib/systemd/system/sysstat-collect.timer.
+Created symlink /etc/systemd/system/sysstat.service.wants/sysstat-summary.timer → /usr/lib/systemd/system/sysstat-summary.timer.
+Created symlink /etc/systemd/system/multi-user.target.wants/sysstat.service → /usr/lib/systemd/system/sysstat.service.
+Setting up libjson-xs-perl (4.040-0ubuntu0.24.04.1) ...
+Setting up postgresql-common (257build1.1) ...
+
+Creating config file /etc/postgresql-common/createcluster.conf with new version
+Building PostgreSQL dictionaries from installed myspell/hunspell packages...
+Removing obsolete dictionary files:
+invoke-rc.d: could not determine current runlevel
+invoke-rc.d: policy-rc.d denied execution of start.
+Created symlink /etc/systemd/system/multi-user.target.wants/postgresql.service → /usr/lib/systemd/system/postgresql.service.
+Setting up postgresql-16 (16.15-0ubuntu0.24.04.1) ...
+Creating new PostgreSQL cluster 16/main ...
+/usr/lib/postgresql/16/bin/initdb -D /var/lib/postgresql/16/main --auth-local peer --auth-host scram-sha-256 --no-instructions
+The files belonging to this database system will be owned by user "postgres".
+This user must also own the server process.
+
+The database cluster will be initialized with locale "C.UTF-8".
+The default database encoding has accordingly been set to "UTF8".
+The default text search configuration will be set to "english".
+
+Data page checksums are disabled.
+
+fixing permissions on existing directory /var/lib/postgresql/16/main ... ok
+creating subdirectories ... ok
+selecting dynamic shared memory implementation ... posix
+selecting default max_connections ... 100
+selecting default shared_buffers ... 128MB
+selecting default time zone ... Etc/UTC
+creating configuration files ... ok
+running bootstrap script ... ok
+performing post-bootstrap initialization ... ok
+syncing data to disk ... ok
+invoke-rc.d: could not determine current runlevel
+invoke-rc.d: policy-rc.d denied execution of start.
+Processing triggers for man-db (2.12.0-4build2) ...
+Processing triggers for libc-bin (2.39-0ubuntu8.9) ...
+Hit:1 http://archive.ubuntu.com/ubuntu noble InRelease
+Hit:2 https://packages.microsoft.com/repos/microsoft-ubuntu-noble-prod noble InRelease
+Hit:3 http://security.ubuntu.com/ubuntu noble-security InRelease
+Get:4 https://repo.mongodb.org/apt/ubuntu noble/mongodb-org/8.0 InRelease [3005 B]
+Hit:5 http://archive.ubuntu.com/ubuntu noble-updates InRelease
+Hit:6 http://archive.ubuntu.com/ubuntu noble-backports InRelease
+Get:7 https://repo.mongodb.org/apt/ubuntu noble/mongodb-org/8.0/multiverse amd64 Packages [97.2 kB]
+Get:8 https://repo.mongodb.org/apt/ubuntu noble/mongodb-org/8.0/multiverse arm64 Packages [96.8 kB]
+Fetched 197 kB in 1s (269 kB/s)
+Reading package lists...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+The following additional packages will be installed:
+  mongodb-database-tools mongodb-mongosh mongodb-org-database
+  mongodb-org-database-tools-extra mongodb-org-mongos mongodb-org-server
+  mongodb-org-shell mongodb-org-tools
+The following NEW packages will be installed:
+  mongodb-database-tools mongodb-mongosh mongodb-org mongodb-org-database
+  mongodb-org-database-tools-extra mongodb-org-mongos mongodb-org-server
+  mongodb-org-shell mongodb-org-tools
+0 upgraded, 9 newly installed, 0 to remove and 18 not upgraded.
+Need to get 207 MB of archives.
+After this operation, 692 MB of additional disk space will be used.
+Get:1 https://repo.mongodb.org/apt/ubuntu noble/mongodb-org/8.0/multiverse amd64 mongodb-database-tools amd64 100.20.1 [69.1 MB]
+Get:2 https://repo.mongodb.org/apt/ubuntu noble/mongodb-org/8.0/multiverse amd64 mongodb-mongosh amd64 2.14.1 [61.8 MB]
+Get:3 https://repo.mongodb.org/apt/ubuntu noble/mongodb-org/8.0/multiverse amd64 mongodb-org-shell amd64 8.0.34 [2600 B]
+Get:4 https://repo.mongodb.org/apt/ubuntu noble/mongodb-org/8.0/multiverse amd64 mongodb-org-server amd64 8.0.34 [43.3 MB]
+Get:5 https://repo.mongodb.org/apt/ubuntu noble/mongodb-org/8.0/multiverse amd64 mongodb-org-mongos amd64 8.0.34 [32.5 MB]
+Get:6 https://repo.mongodb.org/apt/ubuntu noble/mongodb-org/8.0/multiverse amd64 mongodb-org-database-tools-extra amd64 8.0.34 [7382 B]
+Get:7 https://repo.mongodb.org/apt/ubuntu noble/mongodb-org/8.0/multiverse amd64 mongodb-org-database amd64 8.0.34 [3062 B]
+Get:8 https://repo.mongodb.org/apt/ubuntu noble/mongodb-org/8.0/multiverse amd64 mongodb-org-tools amd64 8.0.34 [2394 B]
+Get:9 https://repo.mongodb.org/apt/ubuntu noble/mongodb-org/8.0/multiverse amd64 mongodb-org amd64 8.0.34 [2424 B]
+Fetched 207 MB in 3s (77.8 MB/s)
+Selecting previously unselected package mongodb-database-tools.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 48501 files and directories currently installed.)
+Preparing to unpack .../0-mongodb-database-tools_100.20.1_amd64.deb ...
+Unpacking mongodb-database-tools (100.20.1) ...
+Selecting previously unselected package mongodb-mongosh.
+Preparing to unpack .../1-mongodb-mongosh_2.14.1_amd64.deb ...
+Unpacking mongodb-mongosh (2.14.1) ...
+Selecting previously unselected package mongodb-org-shell.
+Preparing to unpack .../2-mongodb-org-shell_8.0.34_amd64.deb ...
+Unpacking mongodb-org-shell (8.0.34) ...
+Selecting previously unselected package mongodb-org-server.
+Preparing to unpack .../3-mongodb-org-server_8.0.34_amd64.deb ...
+Unpacking mongodb-org-server (8.0.34) ...
+Selecting previously unselected package mongodb-org-mongos.
+Preparing to unpack .../4-mongodb-org-mongos_8.0.34_amd64.deb ...
+Unpacking mongodb-org-mongos (8.0.34) ...
+Selecting previously unselected package mongodb-org-database-tools-extra.
+Preparing to unpack .../5-mongodb-org-database-tools-extra_8.0.34_amd64.deb ...
+Unpacking mongodb-org-database-tools-extra (8.0.34) ...
+Selecting previously unselected package mongodb-org-database.
+Preparing to unpack .../6-mongodb-org-database_8.0.34_amd64.deb ...
+Unpacking mongodb-org-database (8.0.34) ...
+Selecting previously unselected package mongodb-org-tools.
+Preparing to unpack .../7-mongodb-org-tools_8.0.34_amd64.deb ...
+Unpacking mongodb-org-tools (8.0.34) ...
+Selecting previously unselected package mongodb-org.
+Preparing to unpack .../8-mongodb-org_8.0.34_amd64.deb ...
+Unpacking mongodb-org (8.0.34) ...
+Setting up mongodb-mongosh (2.14.1) ...
+Setting up mongodb-org-server (8.0.34) ...
+info: Selecting UID from range 100 to 999 ...
+
+info: Adding system user `mongodb' (UID 103) ...
+info: Adding new user `mongodb' (UID 103) with group `nogroup' ...
+info: Not creating `/nonexistent'.
+info: Selecting GID from range 100 to 999 ...
+info: Adding group `mongodb' (GID 105) ...
+info: Adding user `mongodb' to group `mongodb' ...
+[0;1;31mSystem has not been booted with systemd as init system (PID 1). Can't operate.[0m
+[0;1;31mFailed to connect to bus: Host is down[0m
+Setting up mongodb-org-shell (8.0.34) ...
+Setting up mongodb-database-tools (100.20.1) ...
+Setting up mongodb-org-mongos (8.0.34) ...
+Setting up mongodb-org-database-tools-extra (8.0.34) ...
+Setting up mongodb-org-database (8.0.34) ...
+Setting up mongodb-org-tools (8.0.34) ...
+Setting up mongodb-org (8.0.34) ...
+Processing triggers for man-db (2.12.0-4build2) ...
+==> [3/8] Starting PostgreSQL 16 cluster
+==> [4/8] Starting MongoDB 8 daemon
+about to fork child process, waiting until server is ready for connections.
+forked process: 13320
+child process started successfully, parent exiting
+==> [5/8] Creating PostgreSQL role + databases for the portfolio
+DO
+CREATE DATABASE
+CREATE DATABASE
+CREATE DATABASE
+ALTER DATABASE
+ALTER DATABASE
+ALTER DATABASE
+==> [6/8] Creating MongoDB database + collection scaffolding
+MongoDB passpoint.documents ready
+==> [7/8] Python deps for the bulk generators
+
+[notice] A new release of pip is available: 26.2.2 -> 26.3
+[notice] To update, run: python3 -m pip install --upgrade pip
+==> [8/8] Status check
+
+---- PostgreSQL ----
+                                                                 version                                                                  
+------------------------------------------------------------------------------------------------------------------------------------------
+ PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+(1 row)
+
+ current_user | current_database 
+--------------+------------------
+ codespace    | passpoint
+(1 row)
+
+
+---- MongoDB --------
+{ ok: 1 }
+
+==============================================================
+ Setup complete. Databases ready:
+   PostgreSQL : postgresql:///passpoint  (Unix socket, no pwd)
+   MongoDB    : mongodb://127.0.0.1:27017/passpoint
+ Config dirs  : /etc/postgresql/16/main/ (postgresql.conf, pg_hba.conf)
+==============================================================
