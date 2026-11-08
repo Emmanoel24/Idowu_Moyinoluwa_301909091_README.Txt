@@ -1,0 +1,16 @@
+DROP SCHEMA
+CREATE SCHEMA
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+INSERT 0 4
+INSERT 0 1
+INSERT 0 1
+Setup complete. Demo slot:
+               slot_id                | office_code | slot_date  | start_time | is_open 
+--------------------------------------+-------------+------------+------------+---------
+ 4a859de2-bfab-4942-befe-3ea6e8af75b1 | LGW-IKO     | 2026-11-09 | 10:00:00   | t
+ e79c9c15-cb1a-4056-93c6-2aa443833fa2 | LGW-IKO     | 2026-11-09 | 10:30:00   | t
+(2 rows)
+

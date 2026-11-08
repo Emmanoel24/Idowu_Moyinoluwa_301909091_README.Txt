@@ -1,0 +1,19 @@
+CREATE FUNCTION
+CREATE FUNCTION
+
+--- Test 1: successful book_slot ---
+psql:book_slot.sql:132: NOTICE:  book_slot returned appointment e4065870-9880-4f00-8877-6b7cb0cbe15d  (slot=3a8ec779-31dc-42fe-937c-e1f014f5736e)
+DO
+
+--- Test 2: failed payment -> rollback -> slot released ---
+psql:book_slot.sql:151: NOTICE:  expected exception caught: payment_failed: releasing slot 841c151f-ebdb-42e3-8d74-ff0d6a820b53
+psql:book_slot.sql:151: NOTICE:  after rollback, slot 841c151f-ebdb-42e3-8d74-ff0d6a820b53 is_open = t  (must be TRUE)
+DO
+
+--- Test 3: explicit BEGIN / ROLLBACK pattern (manual) ---
+Run in an interactive psql session to see COMMIT vs ROLLBACK:
+  BEGIN;
+  SELECT book_slot('adaeze.okoro@example.com', '<slot_id>', 'USSD');
+  -- if you ROLLBACK here, the slot is released;
+  -- if you COMMIT, the booking stays.
+  ROLLBACK;   -- or COMMIT;
