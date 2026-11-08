@@ -1,0 +1,101 @@
+%%{init: {"er": {"useMaxWidth": false}, "layoutDirection": "TB"}}%%
+erDiagram
+    OFFICE ||--o{ COUNTER : "has"
+    OFFICE ||--o{ SLOT : "hosts"
+    COUNTER ||--o{ SLOT : "is used by"
+    SERVICE_TYPE ||--o{ SLOT : "service offered"
+    SERVICE_TYPE ||--o{ APPOINTMENT : "service requested"
+    APPLICANT ||--o{ APPOINTMENT : "books"
+    SLOT ||--|| APPOINTMENT : "exactly one appointment occupies one slot (UNIQUE)"
+    APPOINTMENT ||--|| PAYMENT : "has exactly one"
+    APPOINTMENT ||--o{ APPLICATION_STATUS_HISTORY : "lifecycle events"
+    APPOINTMENT ||--o| COLLECTION : "results in at most one"
+
+    OFFICE {
+        uuid      office_id       PK
+        text      office_code     UK "e.g. LGW-IKO, ABJ-ABD, PHC-MRD"
+        text      name
+        text      city            "Lagos / Abuja / Port Harcourt"
+        text      address
+        boolean   is_active
+    }
+
+    COUNTER {
+        uuid      counter_id      PK
+        uuid      office_id       FK
+        smallint  counter_no
+        text      label           "Counter 1, Counter 2 ..."
+        boolean   is_active
+    }
+
+    SERVICE_TYPE {
+        uuid      service_id      PK
+        text      code            UK "FRESH / RENEWAL / REPLACEMENT"
+        text      name
+        numeric   base_fee_ngn    "in Naira"
+        smallint  processing_days
+    }
+
+    SLOT {
+        uuid      slot_id         PK
+        uuid      office_id       FK
+        uuid      counter_id      FK
+        uuid      service_id      FK
+        date      slot_date       "weekday only (CHECK)"
+        time      start_time      "08:00..16:00 (CHECK)"
+        time      end_time        "start_time + 30 min"
+        boolean   is_open         "true until an appointment occupies it"
+    }
+
+    APPLICANT {
+        uuid      applicant_id    PK
+        text      nin_hash        UK "SHA-256 of NIN, never plaintext"
+        text      first_name
+        text      last_name
+        text      email
+        text      phone
+        date      date_of_birth
+        text      gender
+        timestamp created_at
+    }
+
+    APPOINTMENT {
+        uuid      appointment_id  PK
+        uuid      applicant_id    FK
+        uuid      slot_id         FK "UNIQUE — one appointment per slot"
+        uuid      service_id      FK
+        text      status          "BOOKED/CONFIRMED/CAPTURED/PROCESSING/READY/COLLECTED/CANCELLED/NO_SHOW"
+        smallint  reschedule_count "max 2 (trigger)"
+        timestamp booked_at
+        timestamp updated_at
+    }
+
+    PAYMENT {
+        uuid      payment_id      PK
+        uuid      appointment_id  FK "UNIQUE — one payment per appointment"
+        numeric   amount_ngn
+        text      channel          "CARD / BANK_TRANSFER / USSD"
+        text      reference        UK "paystack-style ref"
+        text      payment_status   "PENDING / CONFIRMED / FAILED / REFUNDED"
+        timestamp paid_at
+        timestamp confirmed_at
+    }
+
+    APPLICATION_STATUS_HISTORY {
+        bigserial history_id      PK
+        uuid      appointment_id  FK
+        text      from_status
+        text      to_status
+        text      actor           "APPLICANT / OFFICER / SYSTEM"
+        text      note
+        timestamp changed_at
+    }
+
+    COLLECTION {
+        uuid      collection_id   PK
+        uuid      appointment_id  FK "UNIQUE — at most one collection per appointment"
+        text      collected_by    "name of person who picked it up"
+        text      collector_relation "SELF / SPOUSE / PARENT / SIBLING / AGENT"
+        text      collector_id_hash "SHA-256 of collector's ID"
+        timestamp collected_at
+    }

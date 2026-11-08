@@ -1,0 +1,179 @@
+==> [1/5] Loading schema.sql (tables, CHECKs, UNIQUE, partial UNIQUE)
+DROP SCHEMA
+CREATE SCHEMA
+CREATE EXTENSION
+DO
+DO
+DO
+DO
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE INDEX
+CREATE TABLE
+CREATE TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE TABLE
+CREATE INDEX
+CREATE TABLE
+CREATE INDEX
+CREATE TABLE
+==> [2/5] Loading triggers.sql (4 PL/pgSQL integrity triggers + helpers)
+CREATE FUNCTION
+psql:triggers.sql:47: NOTICE:  trigger "trg_payment_before_confirm" for relation "appointment" does not exist, skipping
+DROP TRIGGER
+CREATE TRIGGER
+CREATE FUNCTION
+psql:triggers.sql:72: NOTICE:  trigger "trg_max_reschedules" for relation "appointment" does not exist, skipping
+DROP TRIGGER
+CREATE TRIGGER
+CREATE FUNCTION
+psql:triggers.sql:109: NOTICE:  trigger "trg_status_order" for relation "appointment" does not exist, skipping
+DROP TRIGGER
+CREATE TRIGGER
+CREATE FUNCTION
+psql:triggers.sql:133: NOTICE:  trigger "trg_reject_plaintext_nin" for relation "applicant" does not exist, skipping
+DROP TRIGGER
+CREATE TRIGGER
+CREATE FUNCTION
+psql:triggers.sql:149: NOTICE:  trigger "trg_bump_updated_at" for relation "appointment" does not exist, skipping
+DROP TRIGGER
+CREATE TRIGGER
+CREATE FUNCTION
+psql:triggers.sql:171: NOTICE:  trigger "trg_audit_status_change" for relation "appointment" does not exist, skipping
+DROP TRIGGER
+CREATE TRIGGER
+CREATE FUNCTION
+==> [3/5] Loading seed.sql (offices, counters, services, demo applicants)
+CREATE FUNCTION
+DROP TRIGGER
+CREATE TRIGGER
+CREATE FUNCTION
+DROP TRIGGER
+CREATE TRIGGER
+CREATE FUNCTION
+DROP TRIGGER
+CREATE TRIGGER
+CREATE FUNCTION
+DROP TRIGGER
+CREATE TRIGGER
+CREATE FUNCTION
+DROP TRIGGER
+CREATE TRIGGER
+CREATE FUNCTION
+DROP TRIGGER
+CREATE TRIGGER
+CREATE FUNCTION
+INSERT 0 4
+INSERT 0 8
+INSERT 0 3
+INSERT 0 4
+INSERT 0 640
+INSERT 0 1
+INSERT 0 1
+UPDATE 1
+INSERT 0 1
+INSERT 0 1
+UPDATE 2
+==> [4/5] Running bulk_generator.py (>=50 000 appointments over 2 years)
+/workspaces/Idowu_Moyinoluwa_301909091_README.Txt/portfolio-1-database-design/bulk_generator.py:270: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  now = datetime.utcnow()
+[bulk] connecting to postgresql:///passpoint
+[bulk] target appointments = 60,000
+[bulk] truncating previous bulk tables (history, collection, payment, appointment, slot, applicant) ...
+[bulk] generating 30,000 applicants (hashed NINs) ...
+[bulk]   inserted 30,000 applicants
+[bulk] generating slots from 2024-11-08 to 2026-11-22 (weekdays only) ...
+[bulk]   generated 67,968 candidate slots — bulk-inserting ...
+[bulk]   slot table now has 67,968 rows
+[bulk] booking 60,000 appointments (each slot used once) ...
+[bulk]   inserting 60,000 appointments ...
+[bulk]   inserting 60,000 payments ...
+[bulk]   inserting 235,598 status-history rows ...
+[bulk]   inserting 41,180 collection rows ...
+[bulk]   marking used slots as is_open=false ...
+
+[bulk] ===== FINAL ROW COUNTS =====
+[bulk]   office                                  4
+[bulk]   service_type                            3
+[bulk]   counter                                 8
+[bulk]   applicant                          30,000
+[bulk]   appointment                        60,000
+[bulk]   collection                         41,180
+[bulk]   payment                            60,000
+[bulk]   slot                               67,968
+[bulk]   application_status_history        235,598
+[bulk] done.
+==> [4b] Re-adding the 4 named demo applicants used by Portfolio 3
+INSERT 0 4
+==> [5/5] Running constraint_tests.sql (every test MUST error out)
+Pager usage is off.
+====================================================================
+ PassPoint constraint tests — every block below MUST error out.
+====================================================================
+
+-- TEST 1: slot on a Saturday (EXTRACT(ISODOW)=6) — must ERROR
+--         Expected: slot_weekday_check
+psql:constraint_tests.sql:41: ERROR:  new row for relation "slot" violates check constraint "slot_weekday_check"
+DETAIL:  Failing row contains (341fa039-bce6-4e61-96b6-b4a288c0c365, 5e9b3521-d002-4be3-b0f1-c5fd03556742, 7eb8d63f-564f-4d89-852f-f262b1438dfe, d711ebb6-954e-43c6-a632-d93bb457797a, 2026-11-07, 10:00:00, 10:30:00, t).
+
+-- TEST 2: slot outside working hours (17:00–17:30) — must ERROR
+--         Expected: slot_time_check
+psql:constraint_tests.sql:56: ERROR:  new row for relation "slot" violates check constraint "slot_time_check"
+DETAIL:  Failing row contains (59c4803f-b606-40ff-b46b-c4198d6340df, 5e9b3521-d002-4be3-b0f1-c5fd03556742, 7eb8d63f-564f-4d89-852f-f262b1438dfe, d711ebb6-954e-43c6-a632-d93bb457797a, 2026-11-09, 17:00:00, 17:30:00, t).
+
+-- TEST 3: second appointment on the same slot — must ERROR
+--         Expected: one_appointment_per_slot (UNIQUE violation)
+psql:constraint_tests.sql:77: ERROR:  duplicate key value violates unique constraint "one_appointment_per_slot"
+DETAIL:  Key (slot_id)=(e2a5d0df-603c-438f-add3-18ed76678071) already exists.
+
+-- TEST 4: same applicant holds two ACTIVE FRESH appointments — must ERROR
+--         Expected: applicant_service_active_uniq
+psql:constraint_tests.sql:103: ERROR:  duplicate key value violates unique constraint "applicant_service_active_uniq"
+DETAIL:  Key (applicant_id, service_id)=(cf721b7d-62b5-4a2a-8e30-ac92927a8683, d711ebb6-954e-43c6-a632-d93bb457797a) already exists.
+
+-- TEST 5: CONFIRM an appointment whose payment is PENDING — must ERROR
+--         Expected: payment_before_confirm
+psql:constraint_tests.sql:121: ERROR:  payment_before_confirm: payment for appointment c04cdd7b-a985-4366-96c8-3bdab62fa04a is PENDING — must be CONFIRMED before the appointment can be CONFIRMED
+CONTEXT:  PL/pgSQL function enforce_payment_before_confirm() line 18 at RAISE
+
+-- TEST 6: third reschedule of an appointment — must ERROR
+--         Expected: max_reschedules
+psql:constraint_tests.sql:164: ERROR:  max_reschedules: appointment c04cdd7b-a985-4366-96c8-3bdab62fa04a already rescheduled 2 times — limit is 2
+CONTEXT:  PL/pgSQL function enforce_max_reschedules() line 5 at RAISE
+SQL statement "UPDATE appointment SET slot_id = free_slot WHERE appointment_id = appt"
+PL/pgSQL function inline_code_block line 31 at SQL statement
+
+-- TEST 7: jump BOOKED -> COLLECTED — must ERROR
+--         Expected: valid_status_transition
+psql:constraint_tests.sql:178: ERROR:  valid_status_transition: appointment c04cdd7b-a985-4366-96c8-3bdab62fa04a cannot move from BOOKED to COLLECTED
+CONTEXT:  PL/pgSQL function enforce_status_order() line 19 at RAISE
+
+-- TEST 8: store an 11-digit plaintext NIN as nin_hash — must ERROR
+--         Expected: nin_plaintext_forbidden (or nin_hash_format_check)
+psql:constraint_tests.sql:191: ERROR:  nin_plaintext_forbidden: national ID numbers must be stored only as SHA-256 hashes — got what looks like an 11-digit plaintext NIN
+CONTEXT:  PL/pgSQL function reject_plaintext_nin() line 4 at RAISE
+
+-- TEST 9: set reschedule_count = 3 directly — must ERROR
+--         Expected: new constraint violation on reschedule_count
+psql:constraint_tests.sql:201: ERROR:  new row for relation "appointment" violates check constraint "appointment_reschedule_count_check"
+DETAIL:  Failing row contains (28750e22-8a32-40cb-9fd5-b93a2586e038, 96118777-5fc1-4972-b49c-e44dec7ac26a, e2a5d0df-603c-438f-add3-18ed76678071, f98a76f6-0f3c-4a56-b44c-64fe918b4196, COLLECTED, 3, 2025-02-25 15:40:00+00, 2026-11-08 22:21:54.583138+00).
+
+-- TEST 10: duplicate payment reference — must ERROR
+--          Expected: duplicate key value violates unique constraint
+psql:constraint_tests.sql:228: ERROR:  duplicate key value violates unique constraint "payment_reference_key"
+DETAIL:  Key (reference)=(PSPT-28750e228a32) already exists.
+
+====================================================================
+ End of constraint tests. Every block above must show an ERROR.
+ If any block shows INSERT/UPDATE 0 1 without an ERROR, the
+ corresponding constraint is missing — fix schema.sql/triggers.sql.
+====================================================================
+
+==> Portfolio 1 complete.
+    Paste the contents of constraint_tests_output.txt into the
+    [paste real output here] placeholders of the final PDF.
