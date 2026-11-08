@@ -1,0 +1,10 @@
+====================================================================
+ passpoint.documents collection created with $jsonSchema validator.
+====================================================================
+====================================================================
+ inserted 5 smoke-test documents (one per document_type).
+ count = 5
+====================================================================
+
+-- negative test: insert a birth_certificate WITHOUT birth_certificate sub-doc --
+EXPECTED rejection: Document failed validation

@@ -1,0 +1,71 @@
+====================================================================
+ PassPoint index demo — COLLSCAN -> IXSCAN
+ collection: passpoint.documents
+====================================================================
+
+--- BEFORE: no index on (office_code, uploaded_at) ---
+{
+  isCached: false,
+  stage: 'COLLSCAN',
+  filter: {
+    '$and': [
+      {
+        office_code: {
+          '$eq': 'LGW-IKO'
+        }
+      },
+      {
+        uploaded_at: {
+          '$gte': ISODate('2026-10-09T22:22:07.271Z')
+        }
+      }
+    ]
+  },
+  direction: 'forward'
+}
+  totalDocsExamined = 42000
+  executionTimeMillis = 15
+  nReturned = 395
+
+  created index office_uploaded_idx on (office_code:1, uploaded_at:-1)
+
+--- AFTER: with index office_uploaded_idx ---
+{
+  isCached: false,
+  stage: 'FETCH',
+  inputStage: {
+    stage: 'IXSCAN',
+    keyPattern: {
+      office_code: 1,
+      uploaded_at: -1
+    },
+    indexName: 'office_uploaded_idx',
+    isMultiKey: false,
+    multiKeyPaths: {
+      office_code: [],
+      uploaded_at: []
+    },
+    isUnique: false,
+    isSparse: false,
+    isPartial: false,
+    indexVersion: 2,
+    direction: 'forward',
+    indexBounds: {
+      office_code: [
+        '["LGW-IKO", "LGW-IKO"]'
+      ],
+      uploaded_at: [
+        '[new Date(9223372036854775807), new Date(1791584527271)]'
+      ]
+    }
+  }
+}
+  totalDocsExamined = 395
+  executionTimeMillis = 1
+  nReturned = 395
+
+========================= SUMMARY ==================================
+                  stage          totalDocsExamined   executionTimeMillis
+  BEFORE   COLLSCAN                 42000                15
+  AFTER    FETCH                      395                 1
+====================================================================

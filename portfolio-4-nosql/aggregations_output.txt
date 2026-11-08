@@ -1,0 +1,334 @@
+====================================================================
+ PassPoint MongoDB aggregations + index demo
+ collection: passpoint.documents  · count = 42000
+====================================================================
+
+##### Aggregation 1 — rejection reasons per document_type #####
+[
+  {
+    count: 35,
+    document_type: 'affidavit',
+    reject_reason: 'NIN slip not legible'
+  },
+  {
+    count: 31,
+    document_type: 'affidavit',
+    reject_reason: 'expired document'
+  },
+  {
+    count: 27,
+    document_type: 'affidavit',
+    reject_reason: 'document blurry'
+  },
+  {
+    count: 25,
+    document_type: 'affidavit',
+    reject_reason: 'photo background not white'
+  },
+  {
+    count: 24,
+    document_type: 'affidavit',
+    reject_reason: 'name mismatch with applicant'
+  },
+  {
+    count: 22,
+    document_type: 'affidavit',
+    reject_reason: 'wrong document uploaded'
+  },
+  {
+    count: 19,
+    document_type: 'affidavit',
+    reject_reason: 'affidavit notarization missing'
+  },
+  {
+    count: 110,
+    document_type: 'birth_certificate',
+    reject_reason: 'expired document'
+  },
+  {
+    count: 100,
+    document_type: 'birth_certificate',
+    reject_reason: 'NIN slip not legible'
+  },
+  {
+    count: 95,
+    document_type: 'birth_certificate',
+    reject_reason: 'document blurry'
+  },
+  {
+    count: 91,
+    document_type: 'birth_certificate',
+    reject_reason: 'affidavit notarization missing'
+  },
+  {
+    count: 91,
+    document_type: 'birth_certificate',
+    reject_reason: 'name mismatch with applicant'
+  },
+  {
+    count: 86,
+    document_type: 'birth_certificate',
+    reject_reason: 'wrong document uploaded'
+  },
+  {
+    count: 83,
+    document_type: 'birth_certificate',
+    reject_reason: 'photo background not white'
+  },
+  {
+    count: 199,
+    document_type: 'nin_slip',
+    reject_reason: 'wrong document uploaded'
+  },
+  {
+    count: 197,
+    document_type: 'nin_slip',
+    reject_reason: 'expired document'
+  },
+  {
+    count: 194,
+    document_type: 'nin_slip',
+    reject_reason: 'name mismatch with applicant'
+  },
+  {
+    count: 190,
+    document_type: 'nin_slip',
+    reject_reason: 'document blurry'
+  },
+  {
+    count: 186,
+    document_type: 'nin_slip',
+    reject_reason: 'NIN slip not legible'
+  },
+  {
+    count: 184,
+    document_type: 'nin_slip',
+    reject_reason: 'affidavit notarization missing'
+  },
+  {
+    count: 170,
+    document_type: 'nin_slip',
+    reject_reason: 'photo background not white'
+  },
+  {
+    count: 103,
+    document_type: 'old_passport_data_page',
+    reject_reason: 'NIN slip not legible'
+  },
+  {
+    count: 103,
+    document_type: 'old_passport_data_page',
+    reject_reason: 'document blurry'
+  },
+  {
+    count: 96,
+    document_type: 'old_passport_data_page',
+    reject_reason: 'affidavit notarization missing'
+  },
+  {
+    count: 96,
+    document_type: 'old_passport_data_page',
+    reject_reason: 'name mismatch with applicant'
+  },
+  {
+    count: 95,
+    document_type: 'old_passport_data_page',
+    reject_reason: 'wrong document uploaded'
+  },
+  {
+    count: 87,
+    document_type: 'old_passport_data_page',
+    reject_reason: 'photo background not white'
+  },
+  {
+    count: 84,
+    document_type: 'old_passport_data_page',
+    reject_reason: 'expired document'
+  },
+  {
+    count: 221,
+    document_type: 'photo',
+    reject_reason: 'expired document'
+  },
+  {
+    count: 211,
+    document_type: 'photo',
+    reject_reason: 'name mismatch with applicant'
+  },
+  {
+    count: 202,
+    document_type: 'photo',
+    reject_reason: 'photo background not white'
+  },
+  {
+    count: 198,
+    document_type: 'photo',
+    reject_reason: 'wrong document uploaded'
+  },
+  {
+    count: 190,
+    document_type: 'photo',
+    reject_reason: 'NIN slip not legible'
+  },
+  {
+    count: 183,
+    document_type: 'photo',
+    reject_reason: 'affidavit notarization missing'
+  },
+  {
+    count: 175,
+    document_type: 'photo',
+    reject_reason: 'document blurry'
+  }
+]
+
+##### Aggregation 2 — avg verification time per office (minutes) #####
+[
+  {
+    verified_count: 10104,
+    office_code: 'PHC-MRD',
+    avg_minutes: 216.7,
+    min_minutes: 1,
+    max_minutes: 480
+  },
+  {
+    verified_count: 10111,
+    office_code: 'LGW-IKO',
+    avg_minutes: 215.75,
+    min_minutes: 1,
+    max_minutes: 480
+  },
+  {
+    verified_count: 10066,
+    office_code: 'ABJ-ABD',
+    avg_minutes: 215.74,
+    min_minutes: 1,
+    max_minutes: 480
+  },
+  {
+    verified_count: 10061,
+    office_code: 'LGW-ALA',
+    avg_minutes: 215.48,
+    min_minutes: 1,
+    max_minutes: 480
+  }
+]
+
+##### Index demo — COLLSCAN (no index) #####
+  (no index to drop)
+BEFORE plan (top level):
+{
+  executionSuccess: true,
+  nReturned: 395,
+  executionTimeMillis: 21,
+  totalKeysExamined: 0,
+  totalDocsExamined: 42000,
+  executionStages: {
+    isCached: false,
+    stage: 'COLLSCAN',
+    filter: {
+      '$and': [
+        {
+          office_code: {
+            '$eq': 'LGW-IKO'
+          }
+        },
+        {
+          uploaded_at: {
+            '$gte': ISODate('2026-10-09T22:22:06.576Z')
+          }
+        }
+      ]
+    },
+    nReturned: 395,
+    executionTimeMillisEstimate: 10,
+    works: 42001,
+    advanced: 395,
+    needTime: 41605,
+    needYield: 0,
+    saveState: 1,
+    restoreState: 1,
+    isEOF: 1,
+    direction: 'forward',
+    docsExamined: 42000
+  }
+}
+  winningPlan.stage = COLLSCAN
+
+  created index office_uploaded_idx on (office_code:1, uploaded_at:-1)
+
+##### Index demo — IXSCAN (with index) #####
+AFTER plan (top level):
+{
+  executionSuccess: true,
+  nReturned: 395,
+  executionTimeMillis: 2,
+  totalKeysExamined: 395,
+  totalDocsExamined: 395,
+  executionStages: {
+    isCached: false,
+    stage: 'FETCH',
+    nReturned: 395,
+    executionTimeMillisEstimate: 0,
+    works: 396,
+    advanced: 395,
+    needTime: 0,
+    needYield: 0,
+    saveState: 0,
+    restoreState: 0,
+    isEOF: 1,
+    docsExamined: 395,
+    alreadyHasObj: 0,
+    inputStage: {
+      stage: 'IXSCAN',
+      nReturned: 395,
+      executionTimeMillisEstimate: 0,
+      works: 396,
+      advanced: 395,
+      needTime: 0,
+      needYield: 0,
+      saveState: 0,
+      restoreState: 0,
+      isEOF: 1,
+      keyPattern: {
+        office_code: 1,
+        uploaded_at: -1
+      },
+      indexName: 'office_uploaded_idx',
+      isMultiKey: false,
+      multiKeyPaths: {
+        office_code: [],
+        uploaded_at: []
+      },
+      isUnique: false,
+      isSparse: false,
+      isPartial: false,
+      indexVersion: 2,
+      direction: 'forward',
+      indexBounds: {
+        office_code: [
+          '["LGW-IKO", "LGW-IKO"]'
+        ],
+        uploaded_at: [
+          '[new Date(9223372036854775807), new Date(1791584526576)]'
+        ]
+      },
+      keysExamined: 395,
+      seeks: 1,
+      dupsTested: 0,
+      dupsDropped: 0
+    }
+  }
+}
+  BEFORE winningPlan stage = COLLSCAN
+  AFTER  winningPlan stage = IXSCAN
+  BEFORE totalDocsExamined = 42000
+  AFTER  totalDocsExamined = 395
+  BEFORE executionTimeMillis = 21
+  AFTER  executionTimeMillis = 2
+
+====================================================================
+ Done. Paste every result block above into the matching
+ [paste real output here] / [paste real EXPLAIN here] placeholder
+ in the final PDF (or in this file, after the relevant printjson).
+====================================================================

@@ -1,0 +1,19 @@
+[seed_docs] connecting to mongodb://127.0.0.1:27017/passpoint.documents
+[seed_docs] target documents = 42,000
+[seed_docs] validator attached
+[seed_docs]   inserted 5,000 / 42,000
+[seed_docs]   inserted 10,000 / 42,000
+[seed_docs]   inserted 15,000 / 42,000
+[seed_docs]   inserted 20,000 / 42,000
+[seed_docs]   inserted 25,000 / 42,000
+[seed_docs]   inserted 30,000 / 42,000
+[seed_docs]   inserted 35,000 / 42,000
+[seed_docs]   inserted 40,000 / 42,000
+[seed_docs] inserted 42,000 documents total
+[seed_docs] countDocuments() = 42,000
+[seed_docs] per document_type:
+[seed_docs]   affidavit                         1,989
+[seed_docs]   birth_certificate                 6,556
+[seed_docs]   nin_slip                         13,254
+[seed_docs]   old_passport_data_page            6,695
+[seed_docs]   photo                            13,506
