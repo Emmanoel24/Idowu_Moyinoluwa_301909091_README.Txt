@@ -1,0 +1,206 @@
+==> [1/2] Loading partition.sql on passpoint (copies appointments into appointment_p5)
+psql:partition.sql:18: NOTICE:  table "appointment_p5" does not exist, skipping
+DROP TABLE
+CREATE TABLE
+DO
+INSERT 0 60001
+ANALYZE
+
+----- partition tree of appointment_p5 -----
+       table_name       |     parent     | isleaf | level 
+------------------------+----------------+--------+-------
+ appointment_p5         |                | f      |     0
+ appointment_p5_2024_12 | appointment_p5 | t      |     1
+ appointment_p5_2025_01 | appointment_p5 | t      |     1
+ appointment_p5_2025_02 | appointment_p5 | t      |     1
+ appointment_p5_2025_03 | appointment_p5 | t      |     1
+ appointment_p5_2025_04 | appointment_p5 | t      |     1
+ appointment_p5_2025_05 | appointment_p5 | t      |     1
+ appointment_p5_2025_06 | appointment_p5 | t      |     1
+ appointment_p5_2025_07 | appointment_p5 | t      |     1
+ appointment_p5_2025_08 | appointment_p5 | t      |     1
+ appointment_p5_2025_09 | appointment_p5 | t      |     1
+ appointment_p5_2025_10 | appointment_p5 | t      |     1
+ appointment_p5_2025_11 | appointment_p5 | t      |     1
+ appointment_p5_2025_12 | appointment_p5 | t      |     1
+ appointment_p5_2026_01 | appointment_p5 | t      |     1
+ appointment_p5_2026_02 | appointment_p5 | t      |     1
+ appointment_p5_2026_03 | appointment_p5 | t      |     1
+ appointment_p5_2026_04 | appointment_p5 | t      |     1
+ appointment_p5_2026_05 | appointment_p5 | t      |     1
+ appointment_p5_2026_06 | appointment_p5 | t      |     1
+ appointment_p5_2026_07 | appointment_p5 | t      |     1
+ appointment_p5_2026_08 | appointment_p5 | t      |     1
+ appointment_p5_2026_09 | appointment_p5 | t      |     1
+ appointment_p5_2026_10 | appointment_p5 | t      |     1
+ appointment_p5_2026_11 | appointment_p5 | t      |     1
+ appointment_p5_2026_12 | appointment_p5 | t      |     1
+ appointment_p5_default | appointment_p5 | t      |     1
+(27 rows)
+
+
+----- EXPLAIN: a one-month query (only one partition should be scanned) -----
+                                                                     QUERY PLAN                                                                      
+-----------------------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=2574.55..2574.56 rows=1 width=8) (actual time=1.250..1.251 rows=1 loops=1)
+   Buffers: shared hit=38
+   ->  Append  (cost=0.00..2568.34 rows=2485 width=0) (actual time=0.007..1.149 rows=2460 loops=1)
+         Buffers: shared hit=38
+         Subplans Removed: 25
+         ->  Seq Scan on appointment_p5_2026_10 appointment_p5_1  (cost=0.00..105.65 rows=2460 width=0) (actual time=0.006..1.028 rows=2460 loops=1)
+               Filter: ((booked_at < date_trunc('month'::text, now())) AND (booked_at >= (date_trunc('month'::text, now()) - '1 mon'::interval)))
+               Buffers: shared hit=38
+ Planning:
+   Buffers: shared hit=677 read=1
+ Planning Time: 1.598 ms
+ Execution Time: 1.281 ms
+(12 rows)
+
+
+----- EXPLAIN: a 2-year query (all 24 partitions scanned) -----
+                                                                      QUERY PLAN                                                                      
+------------------------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=2567.86..2567.87 rows=1 width=8) (actual time=27.961..27.968 rows=1 loops=1)
+   Buffers: shared hit=923
+   ->  Append  (cost=0.00..2419.58 rows=59312 width=0) (actual time=0.006..24.170 rows=59307 loops=1)
+         Buffers: shared hit=923
+         ->  Seq Scan on appointment_p5_2024_12 appointment_p5_1  (cost=0.00..89.92 rows=2546 width=0) (actual time=0.005..0.786 rows=2546 loops=1)
+               Filter: (booked_at >= (date_trunc('month'::text, now()) - '2 years'::interval))
+               Buffers: shared hit=39
+         ->  Seq Scan on appointment_p5_2025_01 appointment_p5_2  (cost=0.00..87.36 rows=2468 width=0) (actual time=0.007..0.734 rows=2468 loops=1)
+               Filter: (booked_at >= (date_trunc('month'::text, now()) - '2 years'::interval))
+               Buffers: shared hit=38
+         ->  Seq Scan on appointment_p5_2025_02 appointment_p5_3  (cost=0.00..79.90 rows=2245 width=0) (actual time=0.005..0.670 rows=2245 loops=1)
+               Filter: (booked_at >= (date_trunc('month'::text, now()) - '2 years'::interval))
+               Buffers: shared hit=35
+         ->  Seq Scan on appointment_p5_2025_03 appointment_p5_4  (cost=0.00..89.58 rows=2529 width=0) (actual time=0.003..0.762 rows=2529 loops=1)
+               Filter: (booked_at >= (date_trunc('month'::text, now()) - '2 years'::interval))
+               Buffers: shared hit=39
+         ->  Seq Scan on appointment_p5_2025_04 appointment_p5_5  (cost=0.00..85.62 rows=2431 width=0) (actual time=0.004..0.722 rows=2431 loops=1)
+               Filter: (booked_at >= (date_trunc('month'::text, now()) - '2 years'::interval))
+               Buffers: shared hit=37
+         ->  Seq Scan on appointment_p5_2025_05 appointment_p5_6  (cost=0.00..87.90 rows=2495 width=0) (actual time=0.004..0.746 rows=2495 loops=1)
+               Filter: (booked_at >= (date_trunc('month'::text, now()) - '2 years'::interval))
+               Buffers: shared hit=38
+         ->  Seq Scan on appointment_p5_2025_06 appointment_p5_7  (cost=0.00..89.26 rows=2513 width=0) (actual time=0.013..0.759 rows=2513 loops=1)
+               Filter: (booked_at >= (date_trunc('month'::text, now()) - '2 years'::interval))
+               Buffers: shared hit=39
+         ->  Seq Scan on appointment_p5_2025_07 appointment_p5_8  (cost=0.00..87.30 rows=2465 width=0) (actual time=0.004..0.764 rows=2465 loops=1)
+               Filter: (booked_at >= (date_trunc('month'::text, now()) - '2 years'::interval))
+               Buffers: shared hit=38
+         ->  Seq Scan on appointment_p5_2025_08 appointment_p5_9  (cost=0.00..87.40 rows=2470 width=0) (actual time=0.004..1.072 rows=2470 loops=1)
+               Filter: (booked_at >= (date_trunc('month'::text, now()) - '2 years'::interval))
+               Buffers: shared hit=38
+         ->  Seq Scan on appointment_p5_2025_09 appointment_p5_10  (cost=0.00..85.30 rows=2415 width=0) (actual time=0.017..1.320 rows=2415 loops=1)
+               Filter: (booked_at >= (date_trunc('month'::text, now()) - '2 years'::interval))
+               Buffers: shared hit=37
+         ->  Seq Scan on appointment_p5_2025_10 appointment_p5_11  (cost=0.00..87.76 rows=2488 width=0) (actual time=0.008..0.772 rows=2488 loops=1)
+               Filter: (booked_at >= (date_trunc('month'::text, now()) - '2 years'::interval))
+               Buffers: shared hit=38
+         ->  Seq Scan on appointment_p5_2025_11 appointment_p5_12  (cost=0.00..84.88 rows=2394 width=0) (actual time=0.006..1.368 rows=2394 loops=1)
+               Filter: (booked_at >= (date_trunc('month'::text, now()) - '2 years'::interval))
+               Buffers: shared hit=37
+         ->  Seq Scan on appointment_p5_2025_12 appointment_p5_13  (cost=0.00..90.00 rows=2550 width=0) (actual time=0.008..0.919 rows=2550 loops=1)
+               Filter: (booked_at >= (date_trunc('month'::text, now()) - '2 years'::interval))
+               Buffers: shared hit=39
+         ->  Seq Scan on appointment_p5_2026_01 appointment_p5_14  (cost=0.00..87.48 rows=2474 width=0) (actual time=0.011..0.745 rows=2474 loops=1)
+               Filter: (booked_at >= (date_trunc('month'::text, now()) - '2 years'::interval))
+               Buffers: shared hit=38
+         ->  Seq Scan on appointment_p5_2026_02 appointment_p5_15  (cost=0.00..80.18 rows=2259 width=0) (actual time=0.005..0.655 rows=2259 loops=1)
+               Filter: (booked_at >= (date_trunc('month'::text, now()) - '2 years'::interval))
+               Buffers: shared hit=35
+         ->  Seq Scan on appointment_p5_2026_03 appointment_p5_16  (cost=0.00..87.94 rows=2497 width=0) (actual time=0.004..0.750 rows=2497 loops=1)
+               Filter: (booked_at >= (date_trunc('month'::text, now()) - '2 years'::interval))
+               Buffers: shared hit=38
+         ->  Seq Scan on appointment_p5_2026_04 appointment_p5_17  (cost=0.00..87.06 rows=2453 width=0) (actual time=0.005..0.738 rows=2453 loops=1)
+               Filter: (booked_at >= (date_trunc('month'::text, now()) - '2 years'::interval))
+               Buffers: shared hit=38
+         ->  Seq Scan on appointment_p5_2026_05 appointment_p5_18  (cost=0.00..87.76 rows=2488 width=0) (actual time=0.008..1.142 rows=2488 loops=1)
+               Filter: (booked_at >= (date_trunc('month'::text, now()) - '2 years'::interval))
+               Buffers: shared hit=38
+         ->  Seq Scan on appointment_p5_2026_06 appointment_p5_19  (cost=0.00..87.20 rows=2460 width=0) (actual time=0.009..1.125 rows=2460 loops=1)
+               Filter: (booked_at >= (date_trunc('month'::text, now()) - '2 years'::interval))
+               Buffers: shared hit=38
+         ->  Seq Scan on appointment_p5_2026_07 appointment_p5_20  (cost=0.00..89.82 rows=2541 width=0) (actual time=0.009..0.893 rows=2541 loops=1)
+               Filter: (booked_at >= (date_trunc('month'::text, now()) - '2 years'::interval))
+               Buffers: shared hit=39
+         ->  Seq Scan on appointment_p5_2026_08 appointment_p5_21  (cost=0.00..87.48 rows=2474 width=0) (actual time=0.011..0.805 rows=2474 loops=1)
+               Filter: (booked_at >= (date_trunc('month'::text, now()) - '2 years'::interval))
+               Buffers: shared hit=38
+         ->  Seq Scan on appointment_p5_2026_09 appointment_p5_22  (cost=0.00..87.82 rows=2491 width=0) (actual time=0.006..0.741 rows=2491 loops=1)
+               Filter: (booked_at >= (date_trunc('month'::text, now()) - '2 years'::interval))
+               Buffers: shared hit=38
+         ->  Seq Scan on appointment_p5_2026_10 appointment_p5_23  (cost=0.00..87.20 rows=2460 width=0) (actual time=0.004..0.731 rows=2460 loops=1)
+               Filter: (booked_at >= (date_trunc('month'::text, now()) - '2 years'::interval))
+               Buffers: shared hit=38
+         ->  Seq Scan on appointment_p5_2026_11 appointment_p5_24  (cost=0.00..13.20 rows=360 width=0) (actual time=0.007..0.114 rows=360 loops=1)
+               Filter: (booked_at >= (date_trunc('month'::text, now()) - '2 years'::interval))
+               Buffers: shared hit=6
+         ->  Seq Scan on appointment_p5_2026_12 appointment_p5_25  (cost=0.00..0.00 rows=1 width=0) (actual time=0.002..0.002 rows=0 loops=1)
+               Filter: (booked_at >= (date_trunc('month'::text, now()) - '2 years'::interval))
+         ->  Seq Scan on appointment_p5_default appointment_p5_26  (cost=0.00..107.70 rows=2345 width=0) (actual time=0.011..0.913 rows=2341 loops=1)
+               Filter: (booked_at >= (date_trunc('month'::text, now()) - '2 years'::interval))
+               Rows Removed by Filter: 694
+               Buffers: shared hit=47
+ Planning:
+   Buffers: shared hit=1
+ Planning Time: 0.354 ms
+ Execution Time: 28.083 ms
+(86 rows)
+
+
+----- INSERT a row dated today and see which partition it lands in -----
+INSERT 0 1
+
+----- which partition holds rows for the current month? -----
+psql:partition.sql:129: NOTICE:  current-month partition = appointment_p5_2026_11  has 361 rows
+DO
+       partition        | count 
+------------------------+-------
+ appointment_p5_2024_12 |  2546
+ appointment_p5_2025_01 |  2468
+ appointment_p5_2025_02 |  2245
+ appointment_p5_2025_03 |  2529
+ appointment_p5_2025_04 |  2431
+ appointment_p5_2025_05 |  2495
+ appointment_p5_2025_06 |  2513
+ appointment_p5_2025_07 |  2465
+ appointment_p5_2025_08 |  2470
+ appointment_p5_2025_09 |  2415
+ appointment_p5_2025_10 |  2488
+ appointment_p5_2025_11 |  2394
+ appointment_p5_2025_12 |  2550
+ appointment_p5_2026_01 |  2474
+ appointment_p5_2026_02 |  2259
+ appointment_p5_2026_03 |  2497
+ appointment_p5_2026_04 |  2453
+ appointment_p5_2026_05 |  2488
+ appointment_p5_2026_06 |  2460
+ appointment_p5_2026_07 |  2541
+ appointment_p5_2026_08 |  2474
+ appointment_p5_2026_09 |  2491
+ appointment_p5_2026_10 |  2460
+ appointment_p5_2026_11 |   361
+ appointment_p5_default |  3035
+(25 rows)
+
+
+==> [2/2] The replication demo needs a second PostgreSQL cluster.
+    Follow the step-by-step guide in:
+        portfolio-5-distributed-cloud/replication_setup.md
+
+    Quick summary of what you will do:
+      1. CREATE ROLE replicator WITH REPLICATION LOGIN PASSWORD '...';
+      2. Append wal_level=replica / max_wal_senders=10 to the primary's
+         /etc/postgresql/16/main/postgresql.conf  (use sudo runuser -u postgres -- ...)
+      3. Prepend a host replication ... line to the TOP of pg_hba.conf
+      4. pg_basebackup -h 127.0.0.1 -U replicator -D /var/lib/postgresql/16/replica -R
+      5. Edit the replica's own postgresql.conf (port=55432, hot_standby=on)
+      6. pg_ctl -D /var/lib/postgresql/16/replica start
+      7. Open two psql sessions (primary on 5432, replica on 55432)
+         and run the blocks in replication_demo.sql
+
+==> Portfolio 5 single-terminal parts complete.
+    Paste the contents of partition_output.txt and the two-terminal
+    replication outputs into the [paste real output here] placeholders
+    in partition.sql / replication_demo.sql / the final PDF.

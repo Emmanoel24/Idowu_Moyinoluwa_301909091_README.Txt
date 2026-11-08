@@ -1,0 +1,108 @@
+ count 
+-------
+ 60002
+(1 row)
+
+CREATE ROLE
+waiting for checkpoint
+167772/188835 kB (88%), 0/1 tablespace
+188846/188846 kB (100%), 0/1 tablespace
+188846/188846 kB (100%), 1/1 tablespace
+/var/lib/postgresql/16/replica/postgresql.auto.conf:primary_conninfo = 'user=replicator password=replica_pw_2026 channel_binding=prefer host=127.0.0.1 port=5432 sslmode=prefer sslcompression=0 sslcertmode=allow sslsni=1 ssl_min_protocol_version=TLSv1.2 gssencmode=prefer krbsrvname=postgres gssdelegation=0 target_session_attrs=any load_balance_hosts=disable'
+waiting for server to start.... done
+server started
+2026-11-08 22:22:22.385 GMT [16612] LOG:  starting PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+2026-11-08 22:22:22.385 GMT [16612] LOG:  listening on IPv4 address "127.0.0.1", port 55432
+2026-11-08 22:22:22.386 GMT [16612] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.55432"
+2026-11-08 22:22:22.391 GMT [16615] LOG:  database system was interrupted; last known up at 2026-11-08 22:22:17 GMT
+2026-11-08 22:22:22.501 GMT [16615] LOG:  entering standby mode
+2026-11-08 22:22:22.501 GMT [16615] LOG:  starting backup recovery with redo LSN 0/13000028, checkpoint LSN 0/13000060, on timeline ID 1
+2026-11-08 22:22:22.505 GMT [16615] LOG:  redo starts at 0/13000028
+2026-11-08 22:22:22.506 GMT [16615] LOG:  completed backup recovery with redo LSN 0/13000028 and end LSN 0/13000100
+2026-11-08 22:22:22.506 GMT [16615] LOG:  consistent recovery state reached at 0/13000100
+2026-11-08 22:22:22.506 GMT [16612] LOG:  database system is ready to accept read-only connections
+2026-11-08 22:22:22.521 GMT [16616] LOG:  started streaming WAL from primary at 0/14000000 on timeline 1
+ application_name |   state   | sync_state |  sent_lsn  | write_lsn  | flush_lsn  | replay_lsn 
+------------------+-----------+------------+------------+------------+------------+------------
+ walreceiver      | streaming | async      | 0/14000000 | 0/14000000 | 0/14000000 | 0/14000000
+(1 row)
+
+ pg_is_in_recovery | lag 
+-------------------+-----
+ t                 | 
+(1 row)
+
+----- BLOCK 0: who is who -----
+You are now connected to database "passpoint" as user "codespace".
+ server  | port | in_recovery 
+---------+------+-------------
+ PRIMARY | 5432 | f
+(1 row)
+
+ primary_rows_before 
+---------------------
+               60002
+(1 row)
+
+You are now connected to database "passpoint" as user "codespace" via socket in "/var/run/postgresql" at port "55432".
+ server  | port  | in_recovery 
+---------+-------+-------------
+ REPLICA | 55432 | t
+(1 row)
+
+ replica_rows_before 
+---------------------
+               60002
+(1 row)
+
+
+----- BLOCK 1: try to WRITE on the REPLICA (must fail) -----
+      expected: ERROR: cannot execute INSERT in a read-only transaction
+psql:replication_demo.sql:26: ERROR:  cannot execute INSERT in a read-only transaction
+
+----- BLOCK 2: WRITE on the PRIMARY -----
+You are now connected to database "passpoint" as user "codespace" via socket in "/var/run/postgresql" at port "5432".
+INSERT 0 1
+new row written on the primary: 31eb40d9-c5e3-41af-93dd-fcff85375a73
+ primary_rows_after 
+--------------------
+              60003
+(1 row)
+
+
+----- BLOCK 3: the new row ARRIVES on the REPLICA -----
+ pg_sleep 
+----------
+ 
+(1 row)
+
+You are now connected to database "passpoint" as user "codespace" via socket in "/var/run/postgresql" at port "55432".
+            appointment_id            | status |           booked_at           
+--------------------------------------+--------+-------------------------------
+ 31eb40d9-c5e3-41af-93dd-fcff85375a73 | BOOKED | 2026-11-08 22:22:22.746487+00
+(1 row)
+
+ replica_rows_after 
+--------------------
+              60003
+(1 row)
+
+
+----- BLOCK 4: replica lag, seen from the REPLICA -----
+ time_since_last_replay | replay_backlog_bytes 
+------------------------+----------------------
+ 00:00:01.023171        |                    0
+(1 row)
+
+
+----- BLOCK 5: replication status, seen from the PRIMARY -----
+You are now connected to database "passpoint" as user "codespace" via socket in "/var/run/postgresql" at port "5432".
+ application_name | client_addr |   state   | sync_state | lag_bytes 
+------------------+-------------+-----------+------------+-----------
+ walreceiver      | 127.0.0.1   | streaming | async      |         0
+(1 row)
+
+
+====================================================================
+ End of replication demo. Paste every block above into the final PDF.
+====================================================================
