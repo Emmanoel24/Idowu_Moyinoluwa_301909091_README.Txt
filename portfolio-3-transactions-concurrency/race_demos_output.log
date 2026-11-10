@@ -1,0 +1,70 @@
+
+=== PART 1: THE BUG (check-then-insert, no constraint, no lock) ===
+  [T1] BEGIN; SELECT count(*) FROM appointment_race WHERE slot_id = slot
+         -> [(0,)]
+  [T2] BEGIN; SELECT count(*) FROM appointment_race WHERE slot_id = slot
+         -> [(0,)]
+  [T1] INSERT appointment for Aisha; COMMIT
+         -> INSERT 0 1
+  [T2] INSERT appointment for Bolaji; COMMIT
+         -> INSERT 0 1
+  [T1] rows for this slot
+         -> [(2,)]
+  RESULT: the same slot was given to TWO applicants (double booking).
+
+=== PART 2: FIX 1, the UNIQUE constraint ===
+  [T1] BEGIN; INSERT into appointment_race_uniq (Aisha)
+         -> INSERT 0 1
+  [T2] BEGIN; INSERT into appointment_race_uniq (Bolaji)
+         -> waiting for T1: True
+  [T1] COMMIT
+  [T2]   -> ERROR: duplicate key value violates unique constraint "one_appointment_per_slot_race"
+
+=== PART 3: FIX 2, SELECT ... FOR UPDATE ===
+  [T1] BEGIN; SELECT is_open ... FOR UPDATE
+         -> [(True,)]
+  [T2] BEGIN; SELECT is_open ... FOR UPDATE
+         -> waiting for T1's lock: True
+  [T1] INSERT Aisha; UPDATE slot_race SET is_open=false; COMMIT
+  [T2]   -> [(False,)]   (now sees the slot CLOSED, so it refuses)
+
+=== PART 4: FIX 3, SERIALIZABLE isolation (no constraint needed) ===
+  [T1] BEGIN SERIALIZABLE; SELECT count(*) FROM appointment_race WHERE slot_id = slot2
+         -> [(0,)]
+  [T2] BEGIN SERIALIZABLE; SELECT count(*) FROM appointment_race WHERE slot_id = slot2
+         -> [(0,)]
+  [T1] INSERT Aisha
+         -> INSERT 0 1
+  [T2] INSERT Bolaji
+         -> INSERT 0 1
+  [T1] COMMIT -> OK
+  [T2] COMMIT -> ERROR: could not serialize access due to read/write dependencies among transactions
+
+=== PART 5: READ COMMITTED vs REPEATABLE READ ===
+  [T1] BEGIN READ COMMITTED; SELECT is_open
+         -> [(True,)]
+  [T2] UPDATE is_open=false (auto-commit)
+         -> UPDATE 1
+  [T1] SELECT is_open again
+         -> [(False,)]
+  RESULT: value changed inside one transaction (non-repeatable read).
+  [T1] BEGIN REPEATABLE READ; SELECT is_open
+         -> [(False,)]
+  [T2] UPDATE is_open=true (auto-commit)
+         -> UPDATE 1
+  [T1] SELECT is_open again
+         -> [(False,)]
+  RESULT: same snapshot both times.
+
+=== PART 6: DEADLOCK ===
+  [T1] BEGIN; UPDATE slot 1
+         -> UPDATE 1
+  [T2] BEGIN; UPDATE slot 2
+         -> UPDATE 1
+  [T1] UPDATE slot 2
+         -> waiting for T2: True
+  [T2] UPDATE slot 1
+         -> ERROR: deadlock detected
+  [T1]   -> UPDATE 1
+
+All six demos finished.

@@ -1,0 +1,151 @@
+]633;E;echo "==== P1 ====";d4f1323b-fb76-42c1-a629-c5a4fb21e617]633;C==== P1 ====
+[bulk] ===== FINAL ROW COUNTS =====
+[bulk]   office                                  4
+[bulk]   service_type                            3
+[bulk]   counter                                 8
+[bulk]   applicant                          30,000
+[bulk]   appointment                        60,000
+[bulk]   collection                         41,180
+[bulk]   payment                            60,000
+[bulk]   slot                               67,968
+==== P2 ====
+--- Q1 BEFORE (no index) ---
+ Execution Time: 3.151 ms
+--- Q1 AFTER (with slot_lookup_idx) ---
+ Execution Time: 0.101 ms
+--- Q2 BEFORE (no index) ---
+ Execution Time: 84.116 ms
+--- Q2 AFTER (with appointment_booked_at_idx + appointment_slot_idx) ---
+ Execution Time: 73.224 ms
+--- Q3 BEFORE (no index) ---
+ Execution Time: 46.760 ms
+--- Q3 AFTER (with appointment_no_show_idx) ---
+ Execution Time: 51.704 ms
+--- Q4 BEFORE (no index) ---
+ Execution Time: 51.282 ms
+--- Q4 AFTER (with collection_appointment_idx) ---
+ Execution Time: 44.796 ms
+--- Q5 BEFORE (no index) ---
+ Execution Time: 48.756 ms
+--- Q5 AFTER (with slot_date_time_idx) ---
+ Execution Time: 57.421 ms
+--- Q6 BEFORE (no index) ---
+ Execution Time: 78.596 ms
+--- Q6 AFTER (with payment_confirmed_idx) ---
+ Execution Time: 68.719 ms
+--- Q7 BEFORE (no index) ---
+ Execution Time: 153.253 ms
+--- Q7 AFTER (with payment_amount_idx + payment_confirmed_idx) ---
+ Execution Time: 155.993 ms
+==== P4 ====
+ inserted 5 smoke-test documents (one per document_type).
+[seed_docs]   inserted 5,000 / 42,000
+[seed_docs]   inserted 10,000 / 42,000
+[seed_docs]   inserted 15,000 / 42,000
+[seed_docs]   inserted 20,000 / 42,000
+[seed_docs]   inserted 25,000 / 42,000
+[seed_docs]   inserted 30,000 / 42,000
+[seed_docs]   inserted 35,000 / 42,000
+[seed_docs]   inserted 40,000 / 42,000
+[seed_docs] inserted 42,000 documents total
+==> [3/4] Running aggregations.js + the COLLSCAN->IXSCAN demo
+##### Index demo — COLLSCAN (no index) #####
+  executionTimeMillis: 21,
+  totalDocsExamined: 42000,
+    stage: 'COLLSCAN',
+    executionTimeMillisEstimate: 10,
+    docsExamined: 42000
+  winningPlan.stage = COLLSCAN
+##### Index demo — IXSCAN (with index) #####
+  executionTimeMillis: 2,
+  totalDocsExamined: 395,
+    executionTimeMillisEstimate: 0,
+    docsExamined: 395,
+      stage: 'IXSCAN',
+      executionTimeMillisEstimate: 0,
+  BEFORE winningPlan stage = COLLSCAN
+  AFTER  winningPlan stage = IXSCAN
+  BEFORE totalDocsExamined = 42000
+  AFTER  totalDocsExamined = 395
+  BEFORE executionTimeMillis = 21
+  AFTER  executionTimeMillis = 2
+ PassPoint index demo — COLLSCAN -> IXSCAN
+  stage: 'COLLSCAN',
+  totalDocsExamined = 42000
+  executionTimeMillis = 15
+    stage: 'IXSCAN',
+  totalDocsExamined = 395
+  executionTimeMillis = 1
+                  stage          totalDocsExamined   executionTimeMillis
+  BEFORE   COLLSCAN                 42000                15
+==== P5 partitions ====
+ appointment_p5_2024_12 | appointment_p5 | t      |     1
+ appointment_p5_2025_01 | appointment_p5 | t      |     1
+ appointment_p5_2025_02 | appointment_p5 | t      |     1
+ appointment_p5_2025_03 | appointment_p5 | t      |     1
+ appointment_p5_2025_04 | appointment_p5 | t      |     1
+ appointment_p5_2025_05 | appointment_p5 | t      |     1
+ appointment_p5_2025_06 | appointment_p5 | t      |     1
+ appointment_p5_2025_07 | appointment_p5 | t      |     1
+ appointment_p5_2025_08 | appointment_p5 | t      |     1
+ appointment_p5_2025_09 | appointment_p5 | t      |     1
+ appointment_p5_2025_10 | appointment_p5 | t      |     1
+ appointment_p5_2025_11 | appointment_p5 | t      |     1
+ appointment_p5_2025_12 | appointment_p5 | t      |     1
+ appointment_p5_2026_01 | appointment_p5 | t      |     1
+ appointment_p5_2026_02 | appointment_p5 | t      |     1
+ appointment_p5_2026_03 | appointment_p5 | t      |     1
+ appointment_p5_2026_04 | appointment_p5 | t      |     1
+ appointment_p5_2026_05 | appointment_p5 | t      |     1
+ appointment_p5_2026_06 | appointment_p5 | t      |     1
+ appointment_p5_2026_07 | appointment_p5 | t      |     1
+ appointment_p5_2026_08 | appointment_p5 | t      |     1
+ appointment_p5_2026_09 | appointment_p5 | t      |     1
+ appointment_p5_2026_10 | appointment_p5 | t      |     1
+ appointment_p5_2026_11 | appointment_p5 | t      |     1
+ appointment_p5_2026_12 | appointment_p5 | t      |     1
+ appointment_p5_default | appointment_p5 | t      |     1
+         Subplans Removed: 25
+         ->  Seq Scan on appointment_p5_2026_10 appointment_p5_1  (cost=0.00..105.65 rows=2460 width=0) (actual time=0.006..1.028 rows=2460 loops=1)
+         ->  Seq Scan on appointment_p5_2024_12 appointment_p5_1  (cost=0.00..89.92 rows=2546 width=0) (actual time=0.005..0.786 rows=2546 loops=1)
+         ->  Seq Scan on appointment_p5_2025_01 appointment_p5_2  (cost=0.00..87.36 rows=2468 width=0) (actual time=0.007..0.734 rows=2468 loops=1)
+==== P5 replication ====
+ pg_is_in_recovery | lag 
+-------------------+-----
+ t                 | 
+(1 row)
+--
+ server  | port | in_recovery 
+---------+------+-------------
+ PRIMARY | 5432 | f
+(1 row)
+--
+ primary_rows_before 
+---------------------
+               60002
+(1 row)
+--
+ server  | port  | in_recovery 
+---------+-------+-------------
+ REPLICA | 55432 | t
+(1 row)
+--
+ replica_rows_before 
+---------------------
+               60002
+(1 row)
+--
+ primary_rows_after 
+--------------------
+              60003
+(1 row)
+--
+ replica_rows_after 
+--------------------
+              60003
+(1 row)
+--
+ application_name | client_addr |   state   | sync_state | lag_bytes 
+------------------+-------------+-----------+------------+-----------
+ walreceiver      | 127.0.0.1   | streaming | async      |         0
+(1 row)
